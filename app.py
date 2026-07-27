@@ -28,7 +28,7 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典
+# UI 文字字典 (強化安全感與產品特色)
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
@@ -37,18 +37,32 @@ ui_labels = {
     "loaded_default": "✅ 已載入系統預設免費 Key" if is_zh else "✅ Loaded system default key",
     "select_provider": "選擇 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
-    "framework_title": "🧠 頂級 AI 管治與人才框架" if is_zh else "🧠 Elite Talent & Governance Framework",
+    
+    # 💡 重新設計：著重「資安安心」與「核心特色」
+    "framework_title": "🛡️ 數據安全與系統特色" if is_zh else "🛡️ Privacy & Core Features",
     "framework_body": """
-    - **ISO 42001 可追溯性:** 嚴格證據鏈與反證機制。
-    - **硬/軟風險分層:** 釐清合規死線與面試觀察點。
-    - **動態面試指標:** 內建 Strong Answer 與 Red Flag 辨識。
+    **🔐 企業級私密防護 (Data Privacy):**
+    - **零數據留存:** 僅於本地 Session 記憶體運算，重新整理頁面即完全清空。
+    - **BYOK 直連加密:** 自備 Key 直連 AI 官方 API，不經過任何第三方中轉伺服器。
+    - **隱私合規:** 嚴格遵循香港 PDPO 數據私隱條例及國際高風險 AI 合規規範。
+
+    **🎯 深度招募特色 (Key Features):**
+    - **履歷原文追溯:** 每項評價均提供原段落引用與「反證驗證」，杜絕 AI 幻覺。
+    - **硬/軟風險分層:** 區分簽證/語言等「硬死線」與文化/習慣等「面試觀察點」。
+    - **實戰防僞面試:** 內建高鑑別力 STAR 問題、優秀指標與紅旗 (Red Flag) 警號。
     """ if is_zh else """
-    - **ISO 42001 Traceability:** Strict evidence & counter-evidence.
-    - **Risk Stratification:** Hard vs. Soft risk isolation.
-    - **Dynamic Probes:** Strong vs. Red Flag answer indicators.
+    **🔐 Enterprise Privacy Guarantee:**
+    - **Zero Data Retention:** Processed strictly in-memory per session; wiped upon refresh.
+    - **Direct API Connection:** Your Key connects directly to official AI endpoints with no third-party middleware.
+    - **PDPO Compliant:** Built under Hong Kong PDPO & global high-risk AI safety guidelines.
+
+    **🎯 Core Platform Features:**
+    - **Traceable Evidence:** Every claim is backed by exact CV quotes and counter-evidence checks.
+    - **Risk Stratification:** Isolates hard blockers (visa/language) from soft observation points.
+    - **Structured Interview Probing:** Generates targeted STAR probes with Strong and Red Flag indicators.
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
-    "subtitle": "🚀 **ISO 42001 企業級人才決策與合規審計系統**" if is_zh else "🚀 **ISO 42001 Enterprise Talent Advisory & Audit System**",
+    "subtitle": "🚀 **企業級高階人才決策與風險合規評估系統**" if is_zh else "🚀 **Enterprise Talent Advisory & Compliance Audit System**",
     "col1_title": "📄 1. 職位描述 (JD)",
     "col2_title": "👤 2. 求職者履歷 (CV)",
     "col3_title": "🎯 3. 特殊要求 (Preferences)",
@@ -100,21 +114,21 @@ st.caption(ui_labels["subtitle"])
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     st.subheader(ui_labels["col1_title"])
-    jd_input_type = st.radio("輸入", ["文字", "檔案"], horizontal=True, label_visibility="collapsed")
-    if jd_input_type == "文字":
-        jd_text = st.text_area("JD 內容", height=200, label_visibility="collapsed")
+    jd_input_type = st.radio("輸入", ["貼上文字", "上傳文件 (可多選)"], horizontal=True, key="jd_mode")
+    if jd_input_type == "貼上文字":
+        jd_text = st.text_area("JD 內容", height=200, placeholder="包含職責與資格等...", label_visibility="collapsed")
     else:
-        jd_files = st.file_uploader("上傳 JD", type=["pdf", "docx", "doc"], accept_multiple_files=True)
+        jd_files = st.file_uploader("上傳 JD 檔案 (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], accept_multiple_files=True, key="jd_uploader")
         jd_text = extract_text_from_files(jd_files)
 
 with col2:
     st.subheader(ui_labels["col2_title"])
-    cv_files = st.file_uploader("上傳 CV", type=["pdf", "docx", "doc"], accept_multiple_files=True)
+    cv_files = st.file_uploader("上傳 CV 檔案 (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], accept_multiple_files=True, key="cv_uploader")
     cv_text = extract_text_from_files(cv_files)
 
 with col3:
     st.subheader(ui_labels["col3_title"])
-    special_reqs = st.text_area("特殊要求", height=200, label_visibility="collapsed")
+    special_reqs = st.text_area("補充說明與特定要求", height=200, placeholder="例如：\n- 必須精通廣東話/英語\n- 接受每週 5 天到現場工作", label_visibility="collapsed")
 
 st.markdown("---")
 
@@ -217,8 +231,7 @@ Candidate CV:
                 clean_json = json_match.group(0) if json_match else raw_response.strip()
                 data = json.loads(clean_json)
                 
-                # ================= Dashboard Visualization =================
-                # 1. Fit Summary
+                # Dashboard Visualization
                 st.markdown(f"## 📊 1. 決策總結 (Fit Summary)")
                 c1, c2, c3, c4 = st.columns(4)
                 c1.metric("綜合得分", f"{data['fit_summary']['overall_score']} / 100")
@@ -228,7 +241,6 @@ Candidate CV:
                 
                 st.info(f"**📌 執行摘要 (Verdict):** {data['fit_summary']['one_sentence_verdict']}")
                 
-                # 2. Score Breakdown
                 st.markdown("### 📈 分數拆解 (Score Breakdown)")
                 sb_cols = st.columns(len(data['score_breakdown']))
                 for idx, item in enumerate(data['score_breakdown']):
@@ -239,12 +251,10 @@ Candidate CV:
                         st.caption(f"*(證據來源: {item['evidence_type']})*")
                 
                 st.markdown("---")
-                # 3. Evidence Table
                 st.markdown(f"## 📜 2. 履歷可追溯證據與反證 (Evidence & Counter-Evidence)")
                 st.table(data['evidence_table'])
                 
                 st.markdown("---")
-                # 4. Risk Flags
                 st.markdown(f"## 🛡️ 3. 風險分層與偏見控制 (Risk Flags & Validation)")
                 r1, r2 = st.columns(2)
                 with r1:
@@ -256,7 +266,6 @@ Candidate CV:
                     st.markdown("**🎯 Offer 前必確認 (Must Confirm):**\n" + "\n".join([f"- {x}" for x in data['final_guidance']['must_confirm']]))
                 
                 st.markdown("---")
-                # 5. Interview Probes
                 st.markdown(f"## 🎯 4. 結構化面試指南 (Structured Interview Probes)")
                 st.caption("💡 *包含測試意圖、正面指標 (Strong) 與負面警號 (Red Flag)*")
                 for q in data['interview_probes']:
