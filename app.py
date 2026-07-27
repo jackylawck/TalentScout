@@ -1,6 +1,7 @@
 import streamlit as st
 import pypdf
 import json
+import re
 from openai import OpenAI
 from google import genai
 from google.genai import types
@@ -114,7 +115,7 @@ def run_ai_analysis(provider, api_key, prompt):
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=prompt + "\n\nFormat strictly as JSON.",
+            contents=prompt + "\n\nFormat strictly as raw JSON without markdown.",
         )
         return response.text
     else:
@@ -197,6 +198,67 @@ Candidate CV:
 """
                 raw_response = run_ai_analysis(provider, api_key, prompt)
                 
-                # 清除 markdown 標籤
-                if raw_response.startswith("```"):
-                    raw_response = raw_response.split("
+                # 採用正則表達式強健抓取 JSON 區塊，預防語法截斷或 Markdown 引號干擾
+                json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
+                if json_match:
+                    clean_json = json_match.group(0)
+                else:
+                    clean_json = raw_response.strip()
+
+                data = json.loads(clean_json)
+                
+                # Dashboard Visualization
+                st.markdown("## 📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)")
+                colA, colB = st.columns(2)
+                with colA:
+                    st.metric(label="綜合匹配得分 (Overall Score)", value=f"{data['overall_score']} / 100")
+                    st.progress(data['overall_score'] / 100)
+                with colB:
+                    tier = data['talent_density_tier']
+                    if "A" in tier or "磁石" in tier:
+                        st.success(f"🏆 評級 (Tier)：{tier}")
+                    elif "B" in tier or "中流" in tier:
+                        st.info(f"👍 評級 (Tier)：{tier}")
+                    else:
+                        st.error(f"⚠️ 評級 (Tier)：{tier}")
+
+                if special_reqs.strip():
+                    st.info(f"🎯 **特殊要求合規審查 (Special Requirements Audit):**\n\n{data.get('special_req_compliance', '已納入評估')}")
+
+                st.markdown("---")
+                st.markdown("## ⚖️ 2. AI 治理與合規審查 (AIGP & ISO 42001 Audit)")
+                st.caption("⚠️ *依據高風險 AI 系統管理框架，本系統提供以下決策輔助與風險緩解建議。*")
+                
+                gov1, gov2 = st.columns(2)
+                with gov1:
+                    st.markdown("**🔍 決策透明度與可解釋性 (Transparency & Explainability):**")
+                    st.write(data['aigp_governance_audit']['transparency_explainability'])
+                    
+                    st.markdown("**⚖️ 公平性與偏見緩解 (Bias & Fairness Assessment):**")
+                    st.write(data['aigp_governance_audit']['bias_and_fairness'])
+                
+                with gov2:
+                    st.error(f"**👨‍⚖️ 人類監督介入點 (Human-in-the-Loop, HITL):**\n\n{data['aigp_governance_audit']['human_in_the_loop_flag']}")
+                    st.warning(f"**🛡️ ISO 42001 風險管控行動 (Risk Controls):**\n\n{data['aigp_governance_audit']['iso42001_risk_control']}")
+
+                st.markdown("---")
+                st.markdown("## 🏢 3. 組織契約與深層動機 (Org. Contract & Career Drivers)")
+                strat1, strat2 = st.columns(2)
+                with strat1:
+                    st.markdown("**🤝 組織用人模型 (Organizational Contract Fit):**")
+                    st.write(data['organizational_contract'])
+                with strat2:
+                    st.markdown(f"**🔥 核心驅動力 (Primary Driver):** {data['career_driver_analysis']['primary_driver']}")
+                    st.markdown("**💡 專屬 Offer 說服策略 (Tailored Pitch Strategy):**")
+                    st.write(data['career_driver_analysis']['offer_strategy'])
+
+                st.markdown("---")
+                st.markdown("## 🎯 4. 實戰行為面試指南 (Behavioral STAR Interview)")
+                st.caption("💡 *管治原則：嚴禁使用「假設性問題」，只探究真實歷史行為以預測未來表現。*")
+                for idx, q in enumerate(data['behavioral_star_questions'], 1):
+                    with st.expander(f"📌 核心指標 (KPI Focus)：{q['kpi_focus']}"):
+                        st.markdown(f"**🗣️ 歷史行為提問 (Behavioral Question)：** {q['question']}")
+                        st.markdown(f"**🕵️ 測謊與深挖追問 (Anti-BS Probe)：** {q['anti_bs_probe']}")
+                        
+            except Exception as e:
+                st.error(f"❌ 分析過程出現錯誤 (請檢查 API Key 或網路狀態)：{str(e)}")
