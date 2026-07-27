@@ -1,8 +1,7 @@
 import streamlit as st
 import pypdf
 import json
-from google import genai
-from google.genai import types
+from openai import OpenAI
 
 # Page Config
 st.set_page_config(
@@ -12,25 +11,34 @@ st.set_page_config(
 )
 
 # Header
-st.title("🎯 慧聘 · 智析官 (TalentScout AI) - 6.0 終極大師版")
-st.caption("🚀 **AI-Driven Talent Science** | 融合人才密度效應、組織契約模型、職涯驅動力與 AI 管治")
+st.title("🎯 慧聘 · 智析官 (TalentScout AI) - GitHub Models 免費版")
+st.caption("🚀 **自備 GitHub Key・零風險**｜融合人才密度效應、組織契約模型、職涯驅動力與 AI 管治")
 
 # Sidebar: Config
 with st.sidebar:
-    st.header("⚙️ 系統設定 (System Config)")
-    api_key = st.text_input("輸入 Gemini API Key (Enter Key)", type="password")
-    st.markdown("[👉 申請免費 API Key (Get Free Key)](https://aistudio.google.com/)")
+    st.header("⚙️ 系統設定 (BYOK)")
+    
+    # 優先從 Secrets 讀取，若無則讓用戶輸入
+    secret_key = st.secrets.get("GITHUB_TOKEN", "")
+    api_key = st.text_input(
+        "輸入 GitHub Personal Access Token", 
+        value=secret_key,
+        type="password",
+        help="貼上你在 GitHub Settings -> Developer Settings -> Personal Access Tokens 申請的 Token (ghp_...)"
+    )
+    
+    st.markdown("[👉 申請 GitHub Personal Access Token](https://github.com/settings/tokens)")
     st.divider()
     
-    st.markdown("### 🧠 內建人才科學框架 (Talent Science Framework)")
+    st.markdown("### 🧠 內建人才科學框架")
     st.markdown("""
     - **人才密度效應 (Talent Density):** 識別能吸引頂尖人才的 A 級玩家。
-    - **組織契約模型 (Organizational Contract):** 區分「長期承諾型」與「短期交易型」用人策略。
-    - **職涯驅動力 (Career Drivers):** 洞察深層動機，定制 Offer 談判策略。
-    - **認知偏差預警 (Bias Warning):** 預防「光環效應 (Halo Effect)」與倉促招聘。
+    - **組織契約模型 (Org. Contract):** 區分「承諾型」與「交易型」用人策略。
+    - **職涯驅動力 (Career Drivers):** 洞察深層動機，定制 Offer 說服策略。
+    - **認知偏差預警 (Bias Warning):** 預防「光環效應」與倉促招聘。
     """)
     st.divider()
-    st.markdown("🔐 **數據管治聲明 (Data Governance):** 採用 BYOK 架構，零數據留存 (Zero Data Retention)，完全符合企業級合規與隱私標準。")
+    st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存，完全符合香港 PDPO 及企業級合規標準。")
 
 def extract_text_from_pdf(pdf_file):
     pdf_reader = pypdf.PdfReader(pdf_file)
@@ -43,85 +51,69 @@ def extract_text_from_pdf(pdf_file):
 col1, col2 = st.columns(2)
 with col1:
     st.subheader("📄 1. 職位描述 (Job Description)")
-    jd_input_type = st.radio("輸入方式 (Input Method)", ["貼上文字 (Text)", "上傳 PDF (PDF)"], key="jd_type", horizontal=True)
+    jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳 PDF"], key="jd_type", horizontal=True)
     jd_text = ""
-    if jd_input_type == "貼上文字 (Text)":
-        jd_text = st.text_area("請貼上 JD 內容 (Paste JD here)：", height=200)
+    if jd_input_type == "貼上文字":
+        jd_text = st.text_area("請貼上 JD 內容：", height=200)
     else:
-        jd_file = st.file_uploader("上傳 JD PDF (Upload JD)", type=["pdf"], key="jd_pdf")
+        jd_file = st.file_uploader("上傳 JD PDF", type=["pdf"], key="jd_pdf")
         if jd_file:
             jd_text = extract_text_from_pdf(jd_file)
 
 with col2:
     st.subheader("👤 2. 求職者履歷 (Candidate CV)")
-    cv_file = st.file_uploader("上傳履歷 PDF (Upload CV)", type=["pdf"], key="cv_pdf")
+    cv_file = st.file_uploader("上傳履歷 PDF", type=["pdf"], key="cv_pdf")
     cv_text = ""
     if cv_file:
         cv_text = extract_text_from_pdf(cv_file)
-        st.success(f"✅ 已讀取 CV (CV Loaded)：{cv_file.name}")
+        st.success(f"✅ 已讀取 CV：{cv_file.name}")
 
 st.markdown("---")
 
-# JSON Schema (Enhanced with advanced recruitment theories)
-analysis_schema = {
-    "type": "OBJECT",
-    "properties": {
-        "overall_score": {"type": "INTEGER", "description": "0-100 Match Score"},
-        "talent_density_tier": {"type": "STRING", "description": "A-Player (人才磁石) / B-Player (中流砥柱) / C-Player (平庸擴散風險)"},
-        "organizational_contract": {
-            "type": "STRING", 
-            "description": "Assess if JD needs a 'Commitment Model' (cultural fit, long-term) or 'Transactional Model' (immediate skills, short-term). State how the CV aligns with this."
-        },
-        "career_driver_analysis": {
-            "type": "OBJECT",
-            "properties": {
-                "primary_driver": {"type": "STRING", "description": "Identify the candidate's core need (e.g., Financial/Survival, Security/Stability, Social/Belonging, Esteem/Recognition, or Self-Actualization)."},
-                "offer_strategy": {"type": "STRING", "description": "How to tailor the recruitment pitch and offer based on their primary driver."}
-            }
-        },
-        "bias_and_risk_warning": {
-            "type": "OBJECT",
-            "properties": {
-                "halo_effect_warning": {"type": "STRING", "description": "Identify any 'Halo Effect' risks (e.g., being blinded by a famous past employer or education) that require objective verification."},
-                "flight_risk": {"type": "STRING", "description": "Assess overqualification or mismatched pacing that could lead to early departure."}
-            }
-        },
-        "sourcing_expansion": {
-            "type": "STRING",
-            "description": "If we want to clone this candidate profile, suggest 2 unconventional sourcing channels (e.g., specific hackathons, niche communities, employee referral angles)."
-        },
-        "behavioral_star_questions": {
-            "type": "ARRAY",
-            "items": {
-                "type": "OBJECT",
-                "properties": {
-                    "kpi_focus": {"type": "STRING", "description": "Core competency being tested."},
-                    "question": {"type": "STRING", "description": "Strictly behavioral question (past actions only, ZERO hypothetical 'what would you do' questions)."},
-                    "anti_bs_probe": {"type": "STRING", "description": "Follow-up question to dig into the details and prevent scripted/fake answers."}
-                }
-            }
-        }
-    },
-    "required": ["overall_score", "talent_density_tier", "organizational_contract", "career_driver_analysis", "bias_and_risk_warning", "sourcing_expansion", "behavioral_star_questions"]
-}
-
 # Analyze Button
-if st.button("🚀 啟動高階人才科學分析 (Run Advanced Talent Science Analysis)", type="primary", use_container_width=True):
+if st.button("🚀 啟動高階人才科學分析 (Run Analysis)", type="primary", use_container_width=True):
     if not api_key:
-        st.error("⚠️ 請在左側輸入 Gemini API Key (Please enter API Key in sidebar)！")
+        st.error("⚠️ 請在左側 Sidebar 輸入你的 GitHub Personal Access Token (ghp_...)！")
     elif not jd_text or not cv_text:
-        st.warning("⚠️ 請提供 JD 與 CV (Please provide both JD and CV)！")
+        st.warning("⚠️ 請同時提供 JD 與 CV 內容！")
     else:
-        with st.spinner("AI 正在執行組織契約與人才密度綜合演算 (Computing Talent Density & Organizational Fit)..."):
+        with st.spinner("AI 正在透過 GitHub Models 進行深度人才科學演算..."):
             try:
-                client = genai.Client(api_key=api_key)
+                # 初始化 GitHub Models API Client
+                client = OpenAI(
+                    base_url="https://models.inference.ai.azure.com",
+                    api_key=api_key,
+                )
                 
                 prompt = f"""
 You are a top-tier HR Executive and AI Governance Lead in Hong Kong. 
 Analyze the JD and CV using deep Talent Science principles without directly naming specific authors/theories. 
 Apply the concepts of Talent Density (A-players vs B/C-players), Organizational Contract Models (Commitment vs Transactional), Driver/Needs Analysis for offer closing, and strictly warn against cognitive biases like the Halo Effect.
 
-Format your output in professional Bilingual format: Traditional Chinese mixed with standard English HR terminology. 
+Format your output strictly in valid JSON matching this schema:
+{{
+  "overall_score": 85,
+  "talent_density_tier": "A-Player (人才磁石)",
+  "organizational_contract": "分析描述...",
+  "career_driver_analysis": {{
+    "primary_driver": "主導動機...",
+    "offer_strategy": "Offer 策略..."
+  }},
+  "bias_and_risk_warning": {{
+    "halo_effect_warning": "光環效應預警...",
+    "flight_risk": "流失風險..."
+  }},
+  "sourcing_expansion": "尋源建議...",
+  "behavioral_star_questions": [
+    {{
+      "kpi_focus": "核心指標...",
+      "question": "行為面試問題...",
+      "anti_bs_probe": "深挖追問..."
+    }}
+  ]
+}}
+
+Output ONLY the raw JSON string, without markdown formatting or code blocks.
 
 Job Description (JD):
 {jd_text}
@@ -129,17 +121,23 @@ Job Description (JD):
 Candidate CV:
 {cv_text}
 """
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=analysis_schema,
-                        temperature=0.2
-                    ),
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a professional HR analytics system that outputs JSON only."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.2,
                 )
                 
-                data = json.loads(response.text)
+                raw_response = response.choices[0].message.content.strip()
+                # 去除可能的 markdown codeblock 標籤
+                if raw_response.startswith("```"):
+                    raw_response = raw_response.split("```")[1]
+                    if raw_response.startswith("json"):
+                        raw_response = raw_response[4:]
+                
+                data = json.loads(raw_response.strip())
                 
                 # ================= Dashboard Visualization =================
                 st.markdown("## 📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)")
@@ -188,4 +186,4 @@ Candidate CV:
                         st.markdown(f"**🕵️ 測謊與深挖追問 (Anti-BS Probe)：** {q['anti_bs_probe']}")
                         
             except Exception as e:
-                st.error(f"❌ 分析過程出現錯誤 (Error during analysis)：{str(e)}")
+                st.error(f"❌ 分析過程出現錯誤：{str(e)}")
