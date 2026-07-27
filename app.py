@@ -2,6 +2,8 @@ import streamlit as st
 import pypdf
 import json
 from openai import OpenAI
+from google import genai
+from google.genai import types
 
 # Page Config
 st.set_page_config(
@@ -11,35 +13,47 @@ st.set_page_config(
 )
 
 # 讀取後台預設 Secrets (如果有設定的話)
-default_token = st.secrets.get("GITHUB_TOKEN", "")
+default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
-# Sidebar: 設定與 Mode 選擇
+# Sidebar: 設定與 Multi-Provider 選擇
 with st.sidebar:
     st.header("⚙️ 系統設定 (System Config)")
     
-    # 選擇模式：預設共用 Key vs 自備私人 Key
+    # 模式選擇
     if default_token:
-        key_option = st.radio(
+        key_mode = st.radio(
             "選擇 AI 金鑰模式：",
-            ["使用系統預設免費 Key", "使用自己 GitHub Token (高效能)"],
+            ["使用系統預設免費 Key", "使用自己 AI API Key (自由選擇供應商)"],
             index=0
         )
     else:
-        key_option = "使用自己 GitHub Token (高效能)"
-        st.info("💡 提示：目前使用自備 Key 模式")
+        key_mode = "使用自己 AI API Key (自由選擇供應商)"
 
-    # 根據選擇決定最終使用的 api_key
-    if key_option == "使用系統預設免費 Key":
+    # 引擎與 Key 處理邏輯
+    if key_mode == "使用系統預設免費 Key":
+        provider = "GitHub Models"
         api_key = default_token
-        st.success("✅ 已載入系統預設 AI 金鑰（保護中，不顯示）")
+        st.success("✅ 已載入系統預設免費 Key (保護中，不顯示)")
     else:
-        api_key = st.text_input(
-            "輸入你的 GitHub Personal Access Token", 
-            type="password",
-            placeholder="ghp_xxxxxxxxxxxx",
-            help="貼上你在 GitHub 申請的 Token (不會被公開或儲存)"
+        provider = st.selectbox(
+            "選擇你的 AI 供應商 (Provider)：",
+            ["OpenAI", "DeepSeek", "Google Gemini", "Groq", "GitHub Models"]
         )
-        st.markdown("[👉 申請 GitHub Personal Access Token](https://github.com/settings/tokens)")
+        
+        # 根據選取的 Provider 給予相應的提示
+        help_texts = {
+            "OpenAI": "輸入 OpenAI API Key (sk-...)",
+            "DeepSeek": "輸入 DeepSeek API Key (sk-...)",
+            "Google Gemini": "輸入 Google Gemini API Key (AIzaSy...)",
+            "Groq": "輸入 Groq API Key (gsk_...)",
+            "GitHub Models": "輸入 GitHub Personal Access Token (ghp_...)"
+        }
+        
+        api_key = st.text_input(
+            f"輸入你的 {provider} Key", 
+            type="password",
+            placeholder=help_texts[provider]
+        )
 
     st.divider()
     st.markdown("### 🧠 內建人才科學框架")
@@ -61,7 +75,7 @@ def extract_text_from_pdf(pdf_file):
 
 # Header
 st.title("🎯 慧聘 · 智析官 (TalentScout AI)")
-st.caption("🚀 **AI-Driven Talent Science**｜融合人才密度效應、組織契約模型、職涯驅動力與 AI 管治")
+st.caption("🚀 **Universal AI-Driven Talent Science**｜支援 OpenAI / DeepSeek / Gemini / Groq / GitHub 多引擎轉換")
 
 # Main UI: Upload Section
 col1, col2 = st.columns(2)
@@ -86,21 +100,50 @@ with col2:
 
 st.markdown("---")
 
+# 核心分析呼叫函數 (跨 Provider 適配器)
+def run_ai_analysis(provider, api_key, prompt):
+    if provider == "Google Gemini":
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt + "\n\nFormat strictly as JSON.",
+        )
+        return response.text
+    else:
+        # OpenAI 兼容格式 (OpenAI, DeepSeek, Groq, GitHub)
+        base_urls = {
+            "OpenAI": "https://api.openai.com/v1",
+            "DeepSeek": "https://api.deepseek.com",
+            "Groq": "https://api.groq.com/openai/v1",
+            "GitHub Models": "https://models.inference.ai.azure.com"
+        }
+        models = {
+            "OpenAI": "gpt-4o-mini",
+            "DeepSeek": "deepseek-chat",
+            "Groq": "llama-3.3-70b-versatile",
+            "GitHub Models": "gpt-4o-mini"
+        }
+        
+        client = OpenAI(base_url=base_urls[provider], api_key=api_key)
+        response = client.chat.completions.create(
+            model=models[provider],
+            messages=[
+                {"role": "system", "content": "You are a professional HR analytics system that outputs raw JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+        )
+        return response.choices[0].message.content.strip()
+
 # Analyze Button
 if st.button("🚀 啟動高階人才科學分析 (Run Analysis)", type="primary", use_container_width=True):
     if not api_key:
-        st.error("⚠️ 請在左側 Sidebar 輸入你的 GitHub Personal Access Token！")
+        st.error(f"⚠️ 請在左側 Sidebar 輸入你的 {provider} API Key / Token！")
     elif not jd_text or not cv_text:
         st.warning("⚠️ 請同時提供 JD 與 CV 內容！")
     else:
-        with st.spinner("AI 正在進行深度人才科學演算..."):
+        with st.spinner(f"AI 正在透過 {provider} 引擎進行深度人才科學演算..."):
             try:
-                # 初始化 GitHub Models API Client
-                client = OpenAI(
-                    base_url="https://models.inference.ai.azure.com",
-                    api_key=api_key,
-                )
-                
                 prompt = f"""
 You are a top-tier HR Executive and AI Governance Lead in Hong Kong. 
 Analyze the JD and CV using deep Talent Science principles without directly naming specific authors/theories. 
@@ -137,16 +180,9 @@ Job Description (JD):
 Candidate CV:
 {cv_text}
 """
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "You are a professional HR analytics system that outputs JSON only."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.2,
-                )
+                raw_response = run_ai_analysis(provider, api_key, prompt)
                 
-                raw_response = response.choices[0].message.content.strip()
+                # 清除 markdown 標籤
                 if raw_response.startswith("```"):
                     raw_response = raw_response.split("```")[1]
                     if raw_response.startswith("json"):
