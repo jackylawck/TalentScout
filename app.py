@@ -1,5 +1,6 @@
 import streamlit as st
 import pypdf
+import docx
 import json
 import re
 from openai import OpenAI
@@ -13,14 +14,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# 讀取後台預設 Secrets (如果有設定的話)
+# 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
 # Sidebar: 設定與 Multi-Provider 選擇
 with st.sidebar:
     st.header("⚙️ 系統設定 (System Config)")
     
-    # 模式選擇
     if default_token:
         key_mode = st.radio(
             "選擇 AI 金鑰模式：",
@@ -30,7 +30,6 @@ with st.sidebar:
     else:
         key_mode = "使用自己 AI API Key (自由選擇供應商)"
 
-    # 引擎與 Key 處理邏輯
     if key_mode == "使用系統預設免費 Key":
         provider = "GitHub Models"
         api_key = default_token
@@ -66,11 +65,27 @@ with st.sidebar:
     st.divider()
     st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 高風險系統合規指引。")
 
-def extract_text_from_pdf(pdf_file):
-    pdf_reader = pypdf.PdfReader(pdf_file)
+# 通用文件文字提取函數 (支援 PDF、DOCX、DOC)
+def extract_text_from_file(uploaded_file):
+    if uploaded_file is None:
+        return ""
+    
+    file_type = uploaded_file.name.split('.')[-1].lower()
     text = ""
-    for page in pdf_reader.pages:
-        text += page.extract_text() or ""
+    
+    try:
+        if file_type == "pdf":
+            pdf_reader = pypdf.PdfReader(uploaded_file)
+            for page in pdf_reader.pages:
+                text += (page.extract_text() or "") + "\n"
+        elif file_type in ["docx", "doc"]:
+            # 解析 Word 檔案 (.docx / .doc)
+            doc = docx.Document(uploaded_file)
+            for para in doc.paragraphs:
+                text += para.text + "\n"
+    except Exception as e:
+        st.error(f"⚠️ 解析檔案 {uploaded_file.name} 時出錯，請嘗試將其另存為標準 .pdf 或 .docx 格式。(錯誤訊息: {str(e)})")
+        
     return text
 
 # Header
@@ -82,22 +97,25 @@ col1, col2, col3 = st.columns([1, 1, 1])
 
 with col1:
     st.subheader("📄 1. 職位描述 (JD)")
-    jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳 PDF"], key="jd_type", horizontal=True)
+    jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳文件"], key="jd_type", horizontal=True)
     jd_text = ""
     if jd_input_type == "貼上文字":
         jd_text = st.text_area("請貼上 JD 內容：", height=200, placeholder="包含職責、必備條件等...")
     else:
-        jd_file = st.file_uploader("上傳 JD PDF", type=["pdf"], key="jd_pdf")
+        jd_file = st.file_uploader("上傳 JD (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], key="jd_file")
         if jd_file:
-            jd_text = extract_text_from_pdf(jd_file)
+            jd_text = extract_text_from_file(jd_file)
+            if jd_text:
+                st.success(f"✅ 已讀取 JD：{jd_file.name}")
 
 with col2:
     st.subheader("👤 2. 求職者履歷 (CV)")
-    cv_file = st.file_uploader("上傳履歷 PDF", type=["pdf"], key="cv_pdf")
+    cv_file = st.file_uploader("上傳履歷 (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], key="cv_file")
     cv_text = ""
     if cv_file:
-        cv_text = extract_text_from_pdf(cv_file)
-        st.success(f"✅ 已讀取 CV：{cv_file.name}")
+        cv_text = extract_text_from_file(cv_file)
+        if cv_text:
+            st.success(f"✅ 已讀取 CV：{cv_file.name}")
 
 with col3:
     st.subheader("🎯 3. 特殊要求 (Preferences)")
@@ -152,7 +170,6 @@ if st.button("🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis
     else:
         with st.spinner(f"AI 正在結合 ISO 42001 標準與 {provider} 引擎進行深度演算..."):
             try:
-                # 組合 Prompt，加入頂級 AIGP 與 ISO 42001 指令
                 prompt = f"""
 You are a top-tier HR Executive and Certified AI Governance Professional (AIGP) operating at the board level in Hong Kong.
 Your task is to analyze the provided JD and CV. Because AI recruitment is considered a "High-Risk AI System" under global frameworks (e.g., EU AI Act), your analysis MUST strictly adhere to ISO 42001 risk management principles.
@@ -198,7 +215,6 @@ Candidate CV:
 """
                 raw_response = run_ai_analysis(provider, api_key, prompt)
                 
-                # 採用正則表達式強健抓取 JSON 區塊，預防語法截斷或 Markdown 引號干擾
                 json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
                 if json_match:
                     clean_json = json_match.group(0)
