@@ -11,24 +11,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# 系統標題與 Tagline
-st.title("🎯 慧聘 · 智析官 (TalentScout AI)")
-st.caption("🚀 **自備 Key・零風險・秒速匹配人才**｜基於 A+ 人才篩選架構、DEIB 原則與 STAR 行為面試法的高階 HR 智能副駕")
+# 系統標題
+st.title("🎯 慧聘 · 智析官 (TalentScout AI) - 終極大師版")
+st.caption("🚀 **自備 Key・零風險**｜融入冰山理論、阿里 ABC 人才分級與高階 STAR 面試法")
 
 # Sidebar: 設定 API Key
 with st.sidebar:
     st.header("⚙️ 系統設定 (BYOK)")
     api_key = st.text_input("輸入 Gemini API Key", type="password")
-    st.markdown("[👉 取得免費 Gemini API Key](https://aistudio.google.com/)")
+    st.markdown("[👉 點此免費申請 Gemini API Key](https://aistudio.google.com/)")
     st.divider()
-    st.markdown("### 🛡️ 數據安全與管治聲明")
+    st.markdown("### 🧠 內建大師級招聘模型")
     st.markdown("""
-    - **100% 本地 Session 運作：** 零數據庫儲存。
-    - **隱私合規：** 符合香港《個人資料（私隱）條例》(PDPO) 指引。
-    - **客觀結構化評分：** 降低面試官主觀偏見 (Bias)。
+    - **漏斗過濾：** 精準辨識 Must-haves。
+    - **冰山理論：** 探測水面下的內驅力與價值觀。
+    - **阿里 ABC 分級：** A類(超預期)、B類(符預期)、C類(不達標)。
+    - **高階 STAR 追問：** 專攻挫折應對與底層邏輯。
     """)
 
-# PDF 文字提取函數
 def extract_text_from_pdf(pdf_file):
     pdf_reader = pypdf.PdfReader(pdf_file)
     text = ""
@@ -38,14 +38,12 @@ def extract_text_from_pdf(pdf_file):
 
 # 主介面：上傳與輸入區
 col1, col2 = st.columns(2)
-
 with col1:
     st.subheader("📄 1. 輸入職位描述 (JD)")
-    jd_input_type = st.radio("JD 輸入方式", ["直接貼上文字", "上傳 PDF"], key="jd_type")
-    
+    jd_input_type = st.radio("JD 輸入方式", ["直接貼上文字", "上傳 PDF"], key="jd_type", horizontal=True)
     jd_text = ""
     if jd_input_type == "直接貼上文字":
-        jd_text = st.text_area("請貼上 JD 內容：", height=250, placeholder="包含職責、必備條件、軟實力要求等...")
+        jd_text = st.text_area("請貼上 JD 內容：", height=200)
     else:
         jd_file = st.file_uploader("上傳 JD PDF", type=["pdf"], key="jd_pdf")
         if jd_file:
@@ -61,71 +59,63 @@ with col2:
 
 st.markdown("---")
 
-# 定義 Gemini JSON Schema（強制輸出結構化資料）
+# 升級版 JSON Schema (強制 AI 輸出高階分析結構)
 analysis_schema = {
     "type": "OBJECT",
     "properties": {
         "overall_score": {"type": "INTEGER", "description": "0-100 的整體匹配分數"},
-        "recommendation": {"type": "STRING", "description": "極力推薦 / 可考慮面試 / 需補充資料 / 不建議"},
-        "strengths": {
+        "abc_classification": {"type": "STRING", "description": "A類(超出預期，堅決拿下) / B類(符合預期，可培養) / C類(達不到要求，堅決淘汰)"},
+        "iceberg_analysis": {
+            "type": "OBJECT",
+            "properties": {
+                "surface_skills": {"type": "STRING", "description": "冰山之上 (表象)：知識、技能、經驗是否達標？"},
+                "deep_potential": {"type": "STRING", "description": "冰山之下 (潛在)：從經歷推斷其價值觀、內驅力、抗壓力與底層素養。"}
+            }
+        },
+        "core_strengths": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
-            "description": "3 個最符合 JD 的核心優勢或量化成果"
+            "description": "3 個最符合 JD 的核心優勢 (業績結果)"
         },
         "red_flags": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
-            "description": "潛在疑慮，如資歷空窗、跳槽頻率、Overqualified 或缺乏關鍵證照"
+            "description": "可能隱藏的風險 (如經驗造假疑慮、頻繁跳槽、動機不明等)"
         },
-        "competency_matrix": {
-            "type": "ARRAY",
-            "items": {
-                "type": "OBJECT",
-                "properties": {
-                    "item": {"type": "STRING", "description": "評估項目"},
-                    "jd_req": {"type": "STRING", "description": "JD 要求"},
-                    "cv_match": {"type": "STRING", "description": "CV 狀況"},
-                    "status": {"type": "STRING", "description": "Pass / Fail / Partial"}
-                }
-            }
-        },
-        "cultural_fit": {
-            "type": "OBJECT",
-            "properties": {
-                "agility": {"type": "STRING", "description": "適應力與成長思維分析"},
-                "style": {"type": "STRING", "description": "團隊與管理風格預估"}
-            }
-        },
-        "deib_warning": {"type": "STRING", "description": "JD 或 CV 中是否包含年齡、性別、地域等偏見風險（若無則填「無顯著偏見風險」）"},
         "star_questions": {
             "type": "ARRAY",
             "items": {
                 "type": "OBJECT",
                 "properties": {
-                    "target": {"type": "STRING", "description": "針對的能力疑點或亮點"},
-                    "question": {"type": "STRING", "description": "STAR 面試題目"},
-                    "what_to_look_for": {"type": "STRING", "description": "觀察重點與期望回答"}
+                    "scenario": {"type": "STRING", "description": "針對的 CV 經歷或疑點"},
+                    "question": {"type": "STRING", "description": "STAR 面試題 (必須包含詢問遇到的困難/挫折)"},
+                    "what_to_look_for": {"type": "STRING", "description": "考官觀察重點 (業績=態度×能力，如何從回答判斷其態度與底層邏輯)"}
                 }
             }
         }
     },
-    "required": ["overall_score", "recommendation", "strengths", "red_flags", "competency_matrix", "cultural_fit", "deib_warning", "star_questions"]
+    "required": ["overall_score", "abc_classification", "iceberg_analysis", "core_strengths", "red_flags", "star_questions"]
 }
 
-# 按鈕與分析邏輯
-if st.button("🚀 啟動「慧聘 · 智析官」進行深度匹配", type="primary", use_container_width=True):
+# 分析按鈕
+if st.button("🚀 啟動「大師級智能匹配」", type="primary", use_container_width=True):
     if not api_key:
         st.error("請在左側 Sidebar 輸入 Gemini API Key！")
     elif not jd_text or not cv_text:
         st.warning("請確保已同時提供 JD 與 CV 內容！")
     else:
-        with st.spinner("「慧聘 · 智析官」正在進行多維度矩陣分析與評分..."):
+        with st.spinner("AI 正在使用冰山理論與阿里招聘心法進行深度透視分析..."):
             try:
                 client = genai.Client(api_key=api_key)
                 
+                # 升級版 Prompt，注入高階 HR 理論
                 prompt = f"""
-你是一位擁有 20 年經驗的高階人力資源顧問 (HR Executive) 及 企業人才戰略專家。
-請根據以下提供的 Job Description (JD) 與 Candidate CV，進行深度、客觀且專業的匹配分析，並依指定 JSON 格式回傳。
+你是一位精通「冰山理論」、「阿里招聘邏輯」及「STAR 行為面試法」的頂尖人力資源總監。
+請嚴格根據以下 JD 與 CV 進行深度透視，不僅看表面字眼，更要洞察底層邏輯：
+
+1. **ABC 人才分級：** 嚴格評估此人是 A類(超預期)、B類(符預期) 還是 C類(不達標)。
+2. **冰山理論透視：** 分析其水面上的技能，並推測水面下的內驅力與抗壓性。
+3. **STAR 高階提問：** 設計面試題時，不問「有沒有做過」，而是問「怎麼做、遇到什麼挫折、如何克服」，以此考核其底層素質。
 
 Job Description (JD):
 {jd_text}
@@ -133,8 +123,6 @@ Job Description (JD):
 Candidate CV:
 {cv_text}
 """
-
-                # 呼叫 Gemini 2.5 Flash 並使用 JSON Schema
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
@@ -145,51 +133,51 @@ Candidate CV:
                     ),
                 )
                 
-                # 解析 JSON 結果
                 data = json.loads(response.text)
                 
-                # 視覺化渲染 Dashboard
-                st.markdown("## 📊 1. 綜合匹配與評估結果")
-                
-                m_col1, m_col2, m_col3 = st.columns([1, 1, 2])
-                with m_col1:
+                # 視覺化 Dashboard
+                st.markdown("## 📊 1. 綜合決策與人才分級")
+                colA, colB = st.columns(2)
+                with colA:
                     st.metric(label="綜合匹配得分", value=f"{data['overall_score']} / 100")
                     st.progress(data['overall_score'] / 100)
-                with m_col2:
-                    st.metric(label="招聘建議", value=data['recommendation'])
-                with m_col3:
-                    st.info(f"🛡️ **DEIB / 偏見風險檢測：** {data['deib_warning']}")
+                with colB:
+                    # 依據 ABC 給予不同顏色的提示
+                    abc_class = data['abc_classification']
+                    if "A類" in abc_class:
+                        st.success(f"🏆 **人才分級：** {abc_class}")
+                    elif "B類" in abc_class:
+                        st.info(f"👍 **人才分級：** {abc_class}")
+                    else:
+                        st.error(f"⚠️ **人才分級：** {abc_class}")
 
-                res_col1, res_col2 = st.columns(2)
-                with res_col1:
-                    st.success("### ✅ 核心優勢 (Strengths)")
-                    for s in data['strengths']:
+                st.markdown("---")
+                st.markdown("## 🏔️ 2. 冰山模型深度透視 (Iceberg Analysis)")
+                ice1, ice2 = st.columns(2)
+                with ice1:
+                    st.info(f"**🌊 冰山之上 (表象技能與經驗)：**\n\n{data['iceberg_analysis']['surface_skills']}")
+                with ice2:
+                    st.warning(f"**🧊 冰山之下 (潛在內驅力與素養)：**\n\n{data['iceberg_analysis']['deep_potential']}")
+
+                st.markdown("---")
+                st.markdown("## ⚖️ 3. 核心優勢 vs. 潛在風險")
+                adv_col, risk_col = st.columns(2)
+                with adv_col:
+                    st.success("### ✅ 核心優勢 (Results/Impact)")
+                    for s in data['core_strengths']:
                         st.markdown(f"- {s}")
-                with res_col2:
-                    st.warning("### ⚠️ 潛在風險 / 疑慮 (Red Flags)")
+                with risk_col:
+                    st.error("### 🚩 潛在風險 (Red Flags)")
                     for r in data['red_flags']:
                         st.markdown(f"- {r}")
 
                 st.markdown("---")
-                st.markdown("## 🧩 2. 關鍵能力與門檻對比矩陣 (Competency Matrix)")
-                st.dataframe(data['competency_matrix'], use_container_width=True)
-
-                st.markdown("---")
-                st.markdown("## 🎯 3. 人才畫像與文化契合度 (Persona & Fit)")
-                p_col1, p_col2 = st.columns(2)
-                with p_col1:
-                    st.markdown("**🌱 適應力與成長思維 (Agility):**")
-                    st.write(data['cultural_fit']['agility'])
-                with p_col2:
-                    st.markdown("**🤝 團隊與管理風格 (Leadership/Team Style):**")
-                    st.write(data['cultural_fit']['style'])
-
-                st.markdown("---")
-                st.markdown("## ❓ 4. 結構化 STAR 面試題庫 (Interview Guide)")
+                st.markdown("## 🎯 4. 高階 STAR 面試攻防題庫")
+                st.caption("💡 *大師心法：不問結論，問過程；問挫折，看底層態度與靈活性。*")
                 for idx, q in enumerate(data['star_questions'], 1):
-                    with st.expander(f"題目 {idx}：{q['target']}"):
-                        st.markdown(f"**🗣️ 面試提問：** {q['question']}")
-                        st.markdown(f"**🎯 考察重點與期望回答：** {q['what_to_look_for']}")
+                    with st.expander(f"📌 題目 {idx}：針對【{q['scenario']}】"):
+                        st.markdown(f"**🗣️ 靈魂拷問：** {q['question']}")
+                        st.markdown(f"**👁️ 考官觀察重點 (業績=態度×能力)：** {q['what_to_look_for']}")
                         
             except Exception as e:
                 st.error(f"分析過程出現錯誤：{str(e)}")
