@@ -40,7 +40,6 @@ with st.sidebar:
             ["OpenAI", "DeepSeek", "Google Gemini", "Groq", "GitHub Models"]
         )
         
-        # 根據選取的 Provider 給予相應的提示
         help_texts = {
             "OpenAI": "輸入 OpenAI API Key (sk-...)",
             "DeepSeek": "輸入 DeepSeek API Key (sk-...)",
@@ -77,14 +76,15 @@ def extract_text_from_pdf(pdf_file):
 st.title("🎯 慧聘 · 智析官 (TalentScout AI)")
 st.caption("🚀 **Universal AI-Driven Talent Science**｜支援 OpenAI / DeepSeek / Gemini / Groq / GitHub 多引擎轉換")
 
-# Main UI: Upload Section
-col1, col2 = st.columns(2)
+# Main UI: 三欄式上傳與輸入區
+col1, col2, col3 = st.columns([1, 1, 1])
+
 with col1:
-    st.subheader("📄 1. 職位描述 (Job Description)")
+    st.subheader("📄 1. 職位描述 (JD)")
     jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳 PDF"], key="jd_type", horizontal=True)
     jd_text = ""
     if jd_input_type == "貼上文字":
-        jd_text = st.text_area("請貼上 JD 內容：", height=200)
+        jd_text = st.text_area("請貼上 JD 內容：", height=200, placeholder="包含職責、必備條件等...")
     else:
         jd_file = st.file_uploader("上傳 JD PDF", type=["pdf"], key="jd_pdf")
         if jd_file:
@@ -98,6 +98,14 @@ with col2:
         cv_text = extract_text_from_pdf(cv_file)
         st.success(f"✅ 已讀取 CV：{cv_file.name}")
 
+with col3:
+    st.subheader("🎯 3. 特殊要求 (Special Requirements)")
+    special_reqs = st.text_area(
+        "輸入額外篩選條件（可留空）：", 
+        height=200, 
+        placeholder="例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作 (No WFH)\n- 優先考慮具備保險/金融背景者\n- 期望薪酬不能超過 HKD 40K\n- 需具備強烈即戰力 (Plug-and-play)"
+    )
+
 st.markdown("---")
 
 # 核心分析呼叫函數 (跨 Provider 適配器)
@@ -110,7 +118,6 @@ def run_ai_analysis(provider, api_key, prompt):
         )
         return response.text
     else:
-        # OpenAI 兼容格式 (OpenAI, DeepSeek, Groq, GitHub)
         base_urls = {
             "OpenAI": "https://api.openai.com/v1",
             "DeepSeek": "https://api.deepseek.com",
@@ -142,17 +149,22 @@ if st.button("🚀 啟動高階人才科學分析 (Run Analysis)", type="primary
     elif not jd_text or not cv_text:
         st.warning("⚠️ 請同時提供 JD 與 CV 內容！")
     else:
-        with st.spinner(f"AI 正在透過 {provider} 引擎進行深度人才科學演算..."):
+        with st.spinner(f"AI 正在結合特殊要求與 {provider} 引擎進行深度演算..."):
             try:
+                # 組合 Prompt，加入特殊要求
                 prompt = f"""
 You are a top-tier HR Executive and AI Governance Lead in Hong Kong. 
 Analyze the JD and CV using deep Talent Science principles without directly naming specific authors/theories. 
 Apply the concepts of Talent Density (A-players vs B/C-players), Organizational Contract Models (Commitment vs Transactional), Driver/Needs Analysis for offer closing, and strictly warn against cognitive biases like the Halo Effect.
 
+Special Requirements / Hiring Preferences:
+{special_reqs if special_reqs.strip() else "None specified."}
+
 Format your output strictly in valid JSON matching this schema:
 {{
   "overall_score": 85,
   "talent_density_tier": "A-Player (人才磁石)",
+  "special_req_compliance": "Explicitly state how well the candidate meets the 'Special Requirements' provided (Pass/Partial/Fail) with key reasons.",
   "organizational_contract": "分析描述...",
   "career_driver_analysis": {{
     "primary_driver": "主導動機...",
@@ -204,6 +216,10 @@ Candidate CV:
                         st.info(f"👍 評級 (Tier)：{tier}")
                     else:
                         st.error(f"⚠️ 評級 (Tier)：{tier}")
+
+                # 顯示特殊要求匹配報告
+                if special_reqs.strip():
+                    st.info(f"🎯 **特殊要求比對結果 (Special Requirements Audit):**\n\n{data.get('special_req_compliance', '已納入評估')}")
 
                 st.markdown("---")
                 st.markdown("## 🏢 2. 組織契約與深層動機 (Org. Contract & Career Drivers)")
