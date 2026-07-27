@@ -28,7 +28,7 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典 (修正所有前端標題與標籤)
+# UI 文字字典 (已移除 AIGP 字眼，全面通用化為 AI Governance)
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
@@ -38,12 +38,12 @@ ui_labels = {
     "select_provider": "選擇 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     
-    "framework_title": "🛡️ 數據安全與系統特色" if is_zh else "🛡️ Privacy & Core Features",
+    "framework_title": "🛡️ 數據安全與 AI 管治特色" if is_zh else "🛡️ Privacy & AI Governance Features",
     "framework_body": """
     **🔐 企業級私密防護 (Data Privacy):**
     - **零數據留存:** 僅於本地 Session 記憶體運算，重新整理頁面即完全清空。
     - **BYOK 直連加密:** 自備 Key 直連 AI 官方 API，不經過任何第三方中轉伺服器。
-    - **隱私合規:** 嚴格遵循香港 PDPO 數據私隱條例及國際高風險 AI 合規規範。
+    - **私隱合規:** 嚴格遵循香港 PDPO 數據私隱條例及國際高風險 AI 合規規範。
 
     **🎯 深度招募特色 (Key Features):**
     - **履歷原文追溯:** 每項評價均提供原段落引用與「反證驗證」，杜絕 AI 幻覺。
@@ -61,14 +61,14 @@ ui_labels = {
     - **Structured Interview Probing:** Generates targeted STAR probes with Strong and Red Flag indicators.
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
-    "subtitle": "🚀 **企業級高階人才決策與風險合規評估系統**" if is_zh else "🚀 **Enterprise Talent Advisory & Compliance Audit System**",
+    "subtitle": "🚀 **企業級高階人才決策與 AI 管治合規評估系統**" if is_zh else "🚀 **Enterprise Talent Advisory & AI Governance Audit System**",
     "col1_title": "📄 1. 職位描述 (JD)" if is_zh else "📄 1. Job Description (JD)",
     "col2_title": "👤 2. 求職者履歷 (CV)" if is_zh else "👤 2. Candidate Resume (CV)",
     "col3_title": "🎯 3. 特殊要求 (Preferences)" if is_zh else "🎯 3. Special Requirements",
     "run_btn": "🚀 啟動高階人才科學與深度合規審查 (Run Audit)" if is_zh else "🚀 Run High-Level Talent Audit",
     "spinner_msg": "🚀 智析演算中：正在建立履歷證據鏈、拆解分數與進行風險反證..." if is_zh else "🚀 Analyzing: Building Evidence Table, Score Breakdown & Risk Flags...",
 
-    # Dashboard 靜態標籤 (動態語言開關)
+    # Dashboard 靜態標籤
     "sec1_title": "📊 1. 決策總結 (Fit Summary)" if is_zh else "📊 1. Fit Summary",
     "m_score": "綜合得分" if is_zh else "Overall Score",
     "m_conf": "信心級別" if is_zh else "Confidence Level",
@@ -79,7 +79,7 @@ ui_labels = {
     "evidence_source": "證據來源" if is_zh else "Evidence Source",
 
     "sec2_title": "📜 2. 履歷可追溯證據與反證 (Evidence & Counter-Evidence)" if is_zh else "📜 2. Traceable Evidence & Counter-Evidence",
-    "sec3_title": "🛡️ 3. 風險分層與偏見控制 (Risk Flags & Validation)" if is_zh else "🛡️ 3. Risk Flags & Anti-Bias Validation",
+    "sec3_title": "🛡️ 3. 風險分層與 AI 管治控制 (Risk Flags & AI Governance)" if is_zh else "🛡️ 3. Risk Flags & AI Governance Controls",
     "hard_risks": "🚨 硬性風險 (Hard Risks - 必須查核):" if is_zh else "🚨 Hard Risks (Requires Immediate Verification):",
     "soft_risks": "⚠️ 軟性風險 (Soft Risks - 面試觀察):" if is_zh else "⚠️ Soft Risks (Interview Observation Points):",
     "bias_traps": "⚖️ 偏見陷阱防範 (Bias Traps):" if is_zh else "⚖️ Anti-Bias Guardrails:",
@@ -167,7 +167,7 @@ def run_ai_analysis(provider, api_key, prompt):
         client = OpenAI(base_url=base_urls[provider], api_key=api_key)
         response = client.chat.completions.create(
             model=models[provider],
-            messages=[{"role": "system", "content": "You are a Senior HR Analyst and AI Governance Expert outputting raw JSON only."}, {"role": "user", "content": prompt}],
+            messages=[{"role": "system", "content": "You are a Senior HR Analyst and AI Governance Lead outputting raw JSON only."}, {"role": "user", "content": prompt}],
             temperature=0.2,
         )
         return response.choices[0].message.content.strip()
@@ -181,7 +181,7 @@ if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
                 lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis and JSON values strictly in Professional Executive English. Do not use any Chinese characters in any fields."
                 
                 prompt = f"""
-You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 guidelines. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, and stated preferences. Use evidence-based reasoning. Do not infer facts not supported by materials.
+You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 and AI Governance principles. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, and stated preferences. Use evidence-based reasoning. Do not infer facts not supported by materials.
 
 Language Requirement:
 {lang_instruction}
