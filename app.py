@@ -14,6 +14,10 @@ st.set_page_config(
     layout="wide"
 )
 
+# 初始化 Session State (用於限制免費 Key 使用次數)
+if 'usage_count' not in st.session_state:
+    st.session_state.usage_count = 0
+
 # 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
@@ -28,7 +32,7 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典 (全面通用化為 AI Governance)
+# UI 文字字典
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
@@ -42,23 +46,23 @@ ui_labels = {
     "framework_body": """
     **🔐 企業級私密防護 (Data Privacy):**
     - **零數據留存:** 僅於本地 Session 記憶體運算，重新整理頁面即完全清空。
-    - **BYOK 直連加密:** 自備 Key 直連 AI 官方 API，不經過任何第三方中轉伺服器。
-    - **私隱合規:** 嚴格遵循香港 PDPO 數據私隱條例及國際高風險 AI 合規規範。
+    - **BYOK 直連加密:** 自備 Key 直連 AI 官方 API，避免意外洩漏。
+    - **私隱合規:** 嚴格遵循香港 PDPO 數據私隱條例。
 
     **🎯 深度招募特色 (Key Features):**
-    - **履歷原文追溯:** 每項評價均提供原段落引用與「反證驗證」，杜絕 AI 幻覺。
-    - **硬/軟風險分層:** 區分簽證/語言等「硬死線」與文化/習慣等「面試觀察點」。
-    - **實戰防僞面試:** 內建高鑑別力 STAR 問題、優秀指標與紅旗 (Red Flag) 警號。
+    - **履歷原文追溯:** 提供原段落引用與「反證驗證」，杜絕 AI 幻覺。
+    - **硬/軟風險分層:** 區分簽證/語言等「硬死線」與「面試觀察點」。
+    - **防呆與穩定機制:** 內建 JSON Schema 驗證與自動除錯機制。
     """ if is_zh else """
     **🔐 Enterprise Privacy Guarantee:**
     - **Zero Data Retention:** Processed strictly in-memory per session; wiped upon refresh.
-    - **Direct API Connection:** Your Key connects directly to official AI endpoints with no third-party middleware.
-    - **PDPO Compliant:** Built under Hong Kong PDPO & global high-risk AI safety guidelines.
+    - **Direct API Connection:** Your Key connects directly to official AI endpoints.
+    - **PDPO Compliant:** Built under Hong Kong PDPO guidelines.
 
     **🎯 Core Platform Features:**
-    - **Traceable Evidence:** Every claim is backed by exact CV quotes and counter-evidence checks.
+    - **Traceable Evidence:** Every claim is backed by exact CV quotes and counter-evidence.
     - **Risk Stratification:** Isolates hard blockers (visa/language) from soft observation points.
-    - **Structured Interview Probing:** Generates targeted STAR probes with Strong and Red Flag indicators.
+    - **Robust Engineering:** Built-in JSON Schema validation and fallback mechanisms.
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
     "subtitle": "🚀 **企業級高階人才決策與 AI 管治合規評估系統**" if is_zh else "🚀 **Enterprise Talent Advisory & AI Governance Audit System**",
@@ -159,7 +163,14 @@ st.markdown("---")
 def run_ai_analysis(provider, api_key, prompt):
     if provider == "Google Gemini":
         client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt + "\n\nFormat strictly as raw JSON without markdown.")
+        response = client.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json", # 強制 Gemini JSON Mode
+                temperature=0.2
+            )
+        )
         return response.text
     else:
         base_urls = {"OpenAI": "https://api.openai.com/v1", "DeepSeek": "https://api.deepseek.com", "Groq": "https://api.groq.com/openai/v1", "GitHub Models": "https://models.inference.ai.azure.com"}
@@ -167,33 +178,42 @@ def run_ai_analysis(provider, api_key, prompt):
         client = OpenAI(base_url=base_urls[provider], api_key=api_key)
         response = client.chat.completions.create(
             model=models[provider],
-            messages=[{"role": "system", "content": "You are a Senior HR Analyst and AI Governance Lead outputting raw JSON only."}, {"role": "user", "content": prompt}],
+            messages=[{"role": "system", "content": "You are a Senior HR Analyst and AI Governance Expert outputting raw JSON only."}, {"role": "user", "content": prompt}],
             temperature=0.2,
+            response_format={"type": "json_object"} # 強制 OpenAI-compatible JSON Mode
         )
         return response.choices[0].message.content.strip()
 
 if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
+    # 防禦 1: 免費 Key 濫用限制 (Rate Limiting)
+    if key_mode == ui_labels["default_key"]:
+        if st.session_state.usage_count >= 5:
+            st.error("⚠️ 系統預設免費額度已達上限（每 Session 5 次），請輸入自備 API Key 繼續使用。" if is_zh else "⚠️ Default free quota exceeded (5 uses per session). Please provide your own API Key.")
+            st.stop()
+        st.session_state.usage_count += 1
+
     if not api_key or not jd_text.strip() or not cv_text.strip():
         st.warning("⚠️ 系統需要完整的 API Key, JD 與 CV 才能啟動。" if is_zh else "⚠️ API Key, JD, and CV are required.")
     else:
+        # 防禦 2: Token / 檔案大小極限檢查
+        MAX_CHARS = 80000 # 約 15k-20k tokens
+        if len(jd_text) + len(cv_text) > MAX_CHARS:
+            st.warning("⚠️ 上傳的文件內容過長，系統已自動截斷尾部以保護 API 穩定性與防爆 Token。" if is_zh else "⚠️ Content too long. System truncated the tail to prevent API failure.")
+            jd_text = jd_text[:MAX_CHARS//2]
+            cv_text = cv_text[:MAX_CHARS//2]
+
         with st.spinner(ui_labels["spinner_msg"]):
             try:
                 lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis and JSON values strictly in Professional Executive English. Do not use any Chinese characters in any fields."
                 
                 prompt = f"""
-You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 and AI Governance principles. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, and stated preferences. Use evidence-based reasoning. Do not infer facts not supported by materials.
+You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 guidelines. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, and stated preferences. Use evidence-based reasoning. Do not infer facts not supported by materials.
 
 Language Requirement:
 {lang_instruction}
 
 Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
-
-### Assessment Principles:
-- Prioritize job-related evidence over prestige/subjective impressions.
-- Identify both supporting evidence AND counter-evidence for major conclusions.
-- Separate Hard Risks (e.g., Visa, language, credentials) from Soft Risks (e.g., style, culture, adaptability).
-- Flag missing/ambiguous info for human verification (HITL).
 
 Format your output STRICTLY in valid JSON matching this exact schema:
 {{
@@ -251,53 +271,67 @@ Candidate CV:
 """
                 raw_response = run_ai_analysis(provider, api_key, prompt)
                 
+                # 防禦 3: JSON 解析修復機制
                 json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
                 clean_json = json_match.group(0) if json_match else raw_response.strip()
-                data = json.loads(clean_json)
                 
-                # Dashboard Visualization (Dynamic Language Text)
+                try:
+                    data = json.loads(clean_json)
+                except json.JSONDecodeError:
+                    st.error("❌ AI 回傳資料格式異常，請重新點擊分析按鈕。" if is_zh else "❌ Invalid JSON format from AI, please retry.")
+                    st.stop()
+
+                # 防禦 4: Schema 驗證層 (使用 .get() 確保不因 AI 漏字位而 Crash)
+                fit_summary = data.get('fit_summary', {})
+                final_guidance = data.get('final_guidance', {})
+                risk_flags = data.get('risk_flags', {})
+                
+                # Dashboard Visualization 
                 st.markdown(f"## {ui_labels['sec1_title']}")
                 c1, c2, c3, c4 = st.columns(4)
-                c1.metric(ui_labels["m_score"], f"{data['fit_summary']['overall_score']} / 100")
-                c2.metric(ui_labels["m_conf"], data['fit_summary']['confidence_level'])
-                c3.metric(ui_labels["m_rec"], data['fit_summary']['final_recommendation'])
-                c4.metric(ui_labels["m_next"], data['final_guidance']['advance_to_next'])
+                c1.metric(ui_labels["m_score"], f"{fit_summary.get('overall_score', 'N/A')} / 100")
+                c2.metric(ui_labels["m_conf"], fit_summary.get('confidence_level', 'N/A'))
+                c3.metric(ui_labels["m_rec"], fit_summary.get('final_recommendation', 'N/A'))
+                c4.metric(ui_labels["m_next"], final_guidance.get('advance_to_next', 'N/A'))
                 
-                st.info(f"**{ui_labels['verdict_title']}** {data['fit_summary']['one_sentence_verdict']}")
+                st.info(f"**{ui_labels['verdict_title']}** {fit_summary.get('one_sentence_verdict', 'N/A')}")
                 
                 st.markdown(f"### {ui_labels['score_breakdown_title']}")
-                sb_cols = st.columns(len(data['score_breakdown']))
-                for idx, item in enumerate(data['score_breakdown']):
-                    with sb_cols[idx]:
-                        st.markdown(f"**{item['dimension']}**")
-                        st.markdown(f"### {item['score']}")
-                        st.caption(f"{item['justification']}")
-                        st.caption(f"*({ui_labels['evidence_source']}: {item['evidence_type']})*")
+                score_breakdown = data.get('score_breakdown', [])
+                if score_breakdown:
+                    sb_cols = st.columns(len(score_breakdown))
+                    for idx, item in enumerate(score_breakdown):
+                        with sb_cols[idx]:
+                            st.markdown(f"**{item.get('dimension', 'N/A')}**")
+                            st.markdown(f"### {item.get('score', 'N/A')}")
+                            st.caption(f"{item.get('justification', '')}")
+                            st.caption(f"*({ui_labels['evidence_source']}: {item.get('evidence_type', 'N/A')})*")
                 
                 st.markdown("---")
                 st.markdown(f"## {ui_labels['sec2_title']}")
-                st.table(data['evidence_table'])
+                st.table(data.get('evidence_table', []))
                 
                 st.markdown("---")
                 st.markdown(f"## {ui_labels['sec3_title']}")
                 r1, r2 = st.columns(2)
                 with r1:
-                    st.error(f"**{ui_labels['hard_risks']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['hard_risks']]))
-                    st.warning(f"**{ui_labels['soft_risks']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['soft_risks']]))
+                    st.error(f"**{ui_labels['hard_risks']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('hard_risks', ["None"])]))
+                    st.warning(f"**{ui_labels['soft_risks']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('soft_risks', ["None"])]))
                 with r2:
-                    st.info(f"**{ui_labels['bias_traps']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['bias_traps']]))
-                    st.markdown(f"**{ui_labels['missing_info']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['missing_info']]))
-                    st.markdown(f"**{ui_labels['must_confirm']}**\n" + "\n".join([f"- {x}" for x in data['final_guidance']['must_confirm']]))
+                    st.info(f"**{ui_labels['bias_traps']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('bias_traps', ["None"])]))
+                    st.markdown(f"**{ui_labels['missing_info']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('missing_info', ["None"])]))
+                    st.markdown(f"**{ui_labels['must_confirm']}**\n" + "\n".join([f"- {x}" for x in final_guidance.get('must_confirm', ["None"])]))
                 
                 st.markdown("---")
                 st.markdown(f"## {ui_labels['sec4_title']}")
                 st.caption(ui_labels["sec4_sub"])
-                for q in data['interview_probes']:
-                    with st.expander(f"📌 {q['competency']}"):
-                        st.markdown(f"**{ui_labels['probe_purpose']}** {q['testing_purpose']}")
-                        st.markdown(f"**{ui_labels['probe_q']}** {q['question']}")
-                        st.success(f"**{ui_labels['probe_strong']}** {q['strong_indicator']}")
-                        st.error(f"**{ui_labels['probe_red']}** {q['red_flag']}")
+                for q in data.get('interview_probes', []):
+                    with st.expander(f"📌 {q.get('competency', 'Competency')}"):
+                        st.markdown(f"**{ui_labels['probe_purpose']}** {q.get('testing_purpose', '')}")
+                        st.markdown(f"**{ui_labels['probe_q']}** {q.get('question', '')}")
+                        st.success(f"**{ui_labels['probe_strong']}** {q.get('strong_indicator', '')}")
+                        st.error(f"**{ui_labels['probe_red']}** {q.get('red_flag', '')}")
                         
+            # 防禦 5: 異常錯誤擷取與 API Key 隱蔽
             except Exception as e:
-                st.error(f"❌ Analysis Error / 分析過程出現錯誤: {str(e)}")
+                st.error(f"❌ Analysis Error / 分析過程出現錯誤: {type(e).__name__} - 系統異常或連線超時，請檢查網路連線與 Key 權限。" if is_zh else f"❌ Analysis Error: {type(e).__name__}. Please check your connection and API key.")
