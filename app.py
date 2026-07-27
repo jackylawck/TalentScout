@@ -17,9 +17,17 @@ st.set_page_config(
 # 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
-# Sidebar: 設定與 Multi-Provider 選擇
+# Sidebar: 設定、Multi-Provider 與 語言選擇
 with st.sidebar:
     st.header("⚙️ 系統設定 (System Config)")
+    
+    # 語言自選區塊 (Language Selection: 二選一)
+    output_lang = st.selectbox(
+        "🌐 選擇報告輸出語言 (Output Language)：",
+        ["繁體中文 (Traditional Chinese)", "English (Full)"],
+        index=0
+    )
+    st.divider()
     
     if default_token:
         key_mode = st.radio(
@@ -65,12 +73,11 @@ with st.sidebar:
     st.divider()
     st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 高風險系統合規指引。")
 
-# 強健的文件文字提取函數 (支援多檔案處理與防錯)
+# 強健的文件文字提取函數
 def extract_text_from_files(uploaded_files):
     if not uploaded_files:
         return ""
     
-    # 如果使用者傳入單一檔案，自動包裝成 list 處理
     if not isinstance(uploaded_files, list):
         uploaded_files = [uploaded_files]
         
@@ -85,7 +92,6 @@ def extract_text_from_files(uploaded_files):
                 for page in pdf_reader.pages:
                     file_text += (page.extract_text() or "") + "\n"
             elif file_type in ["docx", "doc"]:
-                # python-docx 解析 Word
                 doc = docx.Document(file)
                 for para in doc.paragraphs:
                     file_text += para.text + "\n"
@@ -95,7 +101,7 @@ def extract_text_from_files(uploaded_files):
             else:
                 st.warning(f"⚠️ 檔案 `{file.name}` 未能讀取到文字（可能為掃描檔圖片或舊式 `.doc` 二進位格式），建議在 Word 開啟後「另存新檔」為 `.docx` 或 `.pdf`。")
         except Exception as e:
-            st.error(f"❌ 解析檔案 `{file.name}` 失敗！舊版 Word 97-2003 (`.doc`) 常有加密或非標準格式問題，**請將該檔案用 Word 開啟並「另存新檔」為 `.docx` 或 `.pdf` 後重新上傳。**")
+            st.error(f"❌ 解析檔案 `{file.name}` 失敗！舊版 Word 97-2003 (`.doc`) 常有加密問題，請在 Word 開啟並「另存新檔」為 `.docx` 或 `.pdf` 後重新上傳。")
             
     return combined_text
 
@@ -190,15 +196,24 @@ if st.button("🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis
     if not api_key:
         st.error(f"⚠️ 請在左側 Sidebar 輸入你的 {provider} API Key / Token！")
     elif not jd_text.strip() or not cv_text.strip():
-        st.warning("⚠️ 請同時提供有效的 JD 與 CV 內容（如上傳 `.doc` 報錯，請另存為 `.docx` 後重新上傳）！")
+        st.warning("⚠️ 請同時提供有效的 JD 與 CV 內容！")
     else:
-        with st.spinner(f"AI 正在結合 ISO 42001 標準與 {provider} 引擎進行深度演算..."):
+        with st.spinner(f"AI 正在結合 ISO 42001 標準與 {provider} 引擎進行深度演算 ({output_lang})..."):
             try:
+                # 設定 Prompt 的語言要求 (二選一)
+                lang_instructions = {
+                    "繁體中文 (Traditional Chinese)": "Provide the entire analysis strictly in Professional Traditional Chinese (繁體中文). Do not use English unless it is an industry-standard acronym or title.",
+                    "English (Full)": "Provide the entire analysis strictly in Professional Executive English."
+                }
+                
                 prompt = f"""
 You are a top-tier HR Executive and Certified AI Governance Professional (AIGP) operating at the board level in Hong Kong.
 Your task is to analyze the provided JD and CV. Because AI recruitment is considered a "High-Risk AI System" under global frameworks (e.g., EU AI Act), your analysis MUST strictly adhere to ISO 42001 risk management principles.
 
 Apply Talent Science (Talent Density, Organizational Contract, Career Drivers) AND conduct a rigorous AI Governance Audit (HITL, Bias Mitigation, Transparency).
+
+Language Requirement:
+{lang_instructions[output_lang]}
 
 Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
@@ -229,7 +244,7 @@ Format your output STRICTLY in valid JSON matching this schema:
   ]
 }}
 
-Output ONLY the raw JSON string, without markdown formatting or code blocks. Bilingual format (Traditional Chinese + English HR/Risk terms).
+Output ONLY the raw JSON string, without markdown formatting or code blocks.
 
 Job Description (JD):
 {jd_text}
@@ -257,7 +272,7 @@ Candidate CV:
                     tier = data['talent_density_tier']
                     if "A" in tier or "磁石" in tier:
                         st.success(f"🏆 評級 (Tier)：{tier}")
-                    elif "B" in tier or "中流" in tier:
+                    elif "B" in tier or "中流" in tier or "潛力" in tier:
                         st.info(f"👍 評級 (Tier)：{tier}")
                     else:
                         st.error(f"⚠️ 評級 (Tier)：{tier}")
