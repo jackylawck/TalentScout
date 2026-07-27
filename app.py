@@ -55,15 +55,15 @@ with st.sidebar:
         )
 
     st.divider()
-    st.markdown("### 🧠 內建人才科學框架")
+    st.markdown("### 🧠 人才科學與管治框架")
     st.markdown("""
-    - **人才密度效應 (Talent Density):** 識別能吸引頂尖人才的 A 級玩家。
-    - **組織契約模型 (Org. Contract):** 區分「承諾型」與「交易型」用人策略。
-    - **職涯驅動力 (Career Drivers):** 洞察深層動機，定制 Offer 說服策略。
-    - **認知偏差預警 (Bias Warning):** 預防「光環效應」與倉促招聘。
+    - **人才密度 (Talent Density):** 識別 A 級玩家。
+    - **組織契約 (Org. Contract):** 區分承諾型與交易型。
+    - **ISO 42001 管治:** 落實高風險 AI 系統風險管控。
+    - **AIGP 合規:** 確保 HITL (人類監督) 與去偏見 (Bias Mitigation)。
     """)
     st.divider()
-    st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存，完全符合香港 PDPO 及企業級合規標準。")
+    st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 高風險系統合規指引。")
 
 def extract_text_from_pdf(pdf_file):
     pdf_reader = pypdf.PdfReader(pdf_file)
@@ -74,7 +74,7 @@ def extract_text_from_pdf(pdf_file):
 
 # Header
 st.title("🎯 慧聘 · 智析官 (TalentScout AI)")
-st.caption("🚀 **Universal AI-Driven Talent Science**｜支援 OpenAI / DeepSeek / Gemini / Groq / GitHub 多引擎轉換")
+st.caption("🚀 **Universal AI-Driven Talent Science & Governance**｜內建 ISO 42001 與 AIGP 合規審查機制")
 
 # Main UI: 三欄式上傳與輸入區
 col1, col2, col3 = st.columns([1, 1, 1])
@@ -91,7 +91,7 @@ with col1:
             jd_text = extract_text_from_pdf(jd_file)
 
 with col2:
-    st.subheader("👤 2. 求職者履歷 (Candidate CV)")
+    st.subheader("👤 2. 求職者履歷 (CV)")
     cv_file = st.file_uploader("上傳履歷 PDF", type=["pdf"], key="cv_pdf")
     cv_text = ""
     if cv_file:
@@ -99,16 +99,16 @@ with col2:
         st.success(f"✅ 已讀取 CV：{cv_file.name}")
 
 with col3:
-    st.subheader("🎯 3. 特殊要求 (Special Requirements)")
+    st.subheader("🎯 3. 特殊要求 (Preferences)")
     special_reqs = st.text_area(
         "輸入額外篩選條件（可留空）：", 
         height=200, 
-        placeholder="例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作 (No WFH)\n- 優先考慮具備保險/金融背景者\n- 期望薪酬不能超過 HKD 40K\n- 需具備強烈即戰力 (Plug-and-play)"
+        placeholder="例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作\n- 優先考慮具備金融背景者\n- 期望薪酬不能超過 HKD 40K"
     )
 
 st.markdown("---")
 
-# 核心分析呼叫函數 (跨 Provider 適配器)
+# 核心分析呼叫函數
 def run_ai_analysis(provider, api_key, prompt):
     if provider == "Google Gemini":
         client = genai.Client(api_key=api_key)
@@ -135,7 +135,7 @@ def run_ai_analysis(provider, api_key, prompt):
         response = client.chat.completions.create(
             model=models[provider],
             messages=[
-                {"role": "system", "content": "You are a professional HR analytics system that outputs raw JSON only."},
+                {"role": "system", "content": "You are a professional HR and AI Governance system that outputs raw JSON only."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.2,
@@ -143,48 +143,51 @@ def run_ai_analysis(provider, api_key, prompt):
         return response.choices[0].message.content.strip()
 
 # Analyze Button
-if st.button("🚀 啟動高階人才科學分析 (Run Analysis)", type="primary", use_container_width=True):
+if st.button("🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis)", type="primary", use_container_width=True):
     if not api_key:
         st.error(f"⚠️ 請在左側 Sidebar 輸入你的 {provider} API Key / Token！")
     elif not jd_text or not cv_text:
         st.warning("⚠️ 請同時提供 JD 與 CV 內容！")
     else:
-        with st.spinner(f"AI 正在結合特殊要求與 {provider} 引擎進行深度演算..."):
+        with st.spinner(f"AI 正在結合 ISO 42001 標準與 {provider} 引擎進行深度演算..."):
             try:
-                # 組合 Prompt，加入特殊要求
+                # 組合 Prompt，加入頂級 AIGP 與 ISO 42001 指令
                 prompt = f"""
-You are a top-tier HR Executive and AI Governance Lead in Hong Kong. 
-Analyze the JD and CV using deep Talent Science principles without directly naming specific authors/theories. 
-Apply the concepts of Talent Density (A-players vs B/C-players), Organizational Contract Models (Commitment vs Transactional), Driver/Needs Analysis for offer closing, and strictly warn against cognitive biases like the Halo Effect.
+You are a top-tier HR Executive and Certified AI Governance Professional (AIGP) operating at the board level in Hong Kong.
+Your task is to analyze the provided JD and CV. Because AI recruitment is considered a "High-Risk AI System" under global frameworks (e.g., EU AI Act), your analysis MUST strictly adhere to ISO 42001 risk management principles.
 
-Special Requirements / Hiring Preferences:
+Apply Talent Science (Talent Density, Organizational Contract, Career Drivers) AND conduct a rigorous AI Governance Audit (HITL, Bias Mitigation, Transparency).
+
+Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
 
-Format your output strictly in valid JSON matching this schema:
+Format your output STRICTLY in valid JSON matching this schema:
 {{
   "overall_score": 85,
   "talent_density_tier": "A-Player (人才磁石)",
-  "special_req_compliance": "Explicitly state how well the candidate meets the 'Special Requirements' provided (Pass/Partial/Fail) with key reasons.",
-  "organizational_contract": "分析描述...",
+  "special_req_compliance": "Pass/Partial/Fail analysis on special requirements.",
+  "organizational_contract": "Analysis of Commitment vs Transactional fit.",
   "career_driver_analysis": {{
-    "primary_driver": "主導動機...",
-    "offer_strategy": "Offer 策略..."
+    "primary_driver": "Candidate's core motivation...",
+    "offer_strategy": "Tailored pitch strategy..."
   }},
-  "bias_and_risk_warning": {{
-    "halo_effect_warning": "光環效應預警...",
-    "flight_risk": "流失風險..."
+  "aigp_governance_audit": {{
+    "transparency_explainability": "Explainability: Briefly state the exact core algorithmic weights/factors that drove this score (Why this score?).",
+    "human_in_the_loop_flag": "HITL requirement: Specify which impressive claims in the CV MUST be verified by a human (Reference Check) to prevent Automation Bias.",
+    "bias_and_fairness": "Fairness Assessment: Identify any potential disparate impact, age proxies, gendered language, or prestige bias (Halo effect) in this evaluation.",
+    "iso42001_risk_control": "Risk Control: Recommend one specific action for the hiring manager to mitigate the deployment risk of relying on this AI output."
   }},
-  "sourcing_expansion": "尋源建議...",
+  "sourcing_expansion": "Unconventional sourcing suggestions.",
   "behavioral_star_questions": [
     {{
-      "kpi_focus": "核心指標...",
-      "question": "行為面試問題...",
-      "anti_bs_probe": "深挖追問..."
+      "kpi_focus": "Core competency...",
+      "question": "Behavioral question...",
+      "anti_bs_probe": "Anti-BS follow-up..."
     }}
   ]
 }}
 
-Output ONLY the raw JSON string, without markdown formatting or code blocks.
+Output ONLY the raw JSON string, without markdown formatting or code blocks. Bilingual format (Traditional Chinese + English HR/Risk terms).
 
 Job Description (JD):
 {jd_text}
@@ -196,61 +199,4 @@ Candidate CV:
                 
                 # 清除 markdown 標籤
                 if raw_response.startswith("```"):
-                    raw_response = raw_response.split("```")[1]
-                    if raw_response.startswith("json"):
-                        raw_response = raw_response[4:]
-                
-                data = json.loads(raw_response.strip())
-                
-                # Dashboard Visualization
-                st.markdown("## 📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)")
-                colA, colB = st.columns(2)
-                with colA:
-                    st.metric(label="綜合匹配得分 (Overall Score)", value=f"{data['overall_score']} / 100")
-                    st.progress(data['overall_score'] / 100)
-                with colB:
-                    tier = data['talent_density_tier']
-                    if "A" in tier or "磁石" in tier:
-                        st.success(f"🏆 評級 (Tier)：{tier}")
-                    elif "B" in tier or "中流" in tier:
-                        st.info(f"👍 評級 (Tier)：{tier}")
-                    else:
-                        st.error(f"⚠️ 評級 (Tier)：{tier}")
-
-                # 顯示特殊要求匹配報告
-                if special_reqs.strip():
-                    st.info(f"🎯 **特殊要求比對結果 (Special Requirements Audit):**\n\n{data.get('special_req_compliance', '已納入評估')}")
-
-                st.markdown("---")
-                st.markdown("## 🏢 2. 組織契約與深層動機 (Org. Contract & Career Drivers)")
-                strat1, strat2 = st.columns(2)
-                with strat1:
-                    st.markdown("**🤝 組織用人模型 (Organizational Contract Fit):**")
-                    st.write(data['organizational_contract'])
-                with strat2:
-                    st.markdown(f"**🔥 核心驅動力 (Primary Driver):** {data['career_driver_analysis']['primary_driver']}")
-                    st.markdown("**💡 專屬 Offer 說服策略 (Tailored Pitch Strategy):**")
-                    st.write(data['career_driver_analysis']['offer_strategy'])
-
-                st.markdown("---")
-                st.markdown("## 🛡️ 3. 認知偏差預警與風險管治 (Bias Warning & Risk Mgt)")
-                gov1, gov2 = st.columns(2)
-                with gov1:
-                    st.warning(f"**👁️ 光環效應預警 (Halo Effect Warning):**\n\n{data['bias_and_risk_warning']['halo_effect_warning']}")
-                with gov2:
-                    st.error(f"**🛫 流失與錯配風險 (Flight Risk):**\n\n{data['bias_and_risk_warning']['flight_risk']}")
-
-                st.markdown("---")
-                st.markdown("## 🌐 4. 尋源與雇主品牌擴展 (Sourcing & Talent Pipeline)")
-                st.info(f"**💡 尋源拓展建議 (Unconventional Sourcing):**\n{data['sourcing_expansion']}")
-
-                st.markdown("---")
-                st.markdown("## 🎯 5. 實戰行為面試指南 (Behavioral STAR Interview)")
-                st.caption("💡 *管治原則：嚴禁使用「假設性問題」，只探究真實歷史行為以預測未來表現。*")
-                for idx, q in enumerate(data['behavioral_star_questions'], 1):
-                    with st.expander(f"📌 核心指標 (KPI Focus)：{q['kpi_focus']}"):
-                        st.markdown(f"**🗣️ 歷史行為提問 (Behavioral Question)：** {q['question']}")
-                        st.markdown(f"**🕵️ 測謊與深挖追問 (Anti-BS Probe)：** {q['anti_bs_probe']}")
-                        
-            except Exception as e:
-                st.error(f"❌ 分析過程出現錯誤：{str(e)}")
+                    raw_response = raw_response.split("
