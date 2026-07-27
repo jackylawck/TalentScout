@@ -39,21 +39,21 @@ ui_labels = {
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     "framework_title": "🧠 人才科學與管治框架" if is_zh else "🧠 Talent Science & Governance",
     "framework_body": """
-    - **人才密度 (Talent Density):** 精準辨識 A/B 級戰略人才。
-    - **組織契約 (Org. Contract):** 洞察承諾型與交易型聘用動機。
-    - **ISO 42001 管治:** 落實高風險 AI 系統之決策風險管控。
-    - **AIGP 合規:** 確保 HITL (人類監督) 與去偏見 (Bias Mitigation)。
+    - **可追溯性 (Traceability):** ISO 42001 履歷證據鏈 (Evidence Table)。
+    - **五維拆解 (Score Breakdown):** 拒絕黑盒分數，拆解硬傷與軟實力。
+    - **反證機制 (Counter-Evidence):** 識別單一訊號偏見與履歷光環。
+    - **EA 實戰提問:** 聚焦預判需求、適應改動與高壓準確度。
     """ if is_zh else """
-    - **Talent Density:** Identify strategic A/B-Players.
-    - **Org. Contract:** Commitment vs. Transactional motivators.
-    - **ISO 42001:** High-risk AI decision controls.
-    - **AIGP Compliance:** Ensure HITL & Bias Mitigation.
+    - **Traceability:** ISO 42001 Evidence Table.
+    - **Score Breakdown:** 5-subscore analytics.
+    - **Counter-Evidence:** Mitigate Halo bias.
+    - **EA Probes:** Proactivity & crisis management.
     """,
     "governance_notice": "🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 合規指引。" if is_zh else "🔐 **Data Governance Notice:** Session-only operation with zero retention. Compliant with PDPO & EU AI Act guidance.",
     
     # Header & Sections
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
-    "subtitle": "🚀 **Universal AI-Driven Talent Science & Governance**｜內建 ISO 42001 與 AIGP 合規審查機制" if is_zh else "🚀 **Universal AI-Driven Talent Science & Governance**｜Embedded ISO 42001 & AIGP Audit Framework",
+    "subtitle": "🚀 **ISO 42001 & AIGP 企業級人才決策與風險評估系統**" if is_zh else "🚀 **ISO 42001 & AIGP Enterprise Talent Advisory System**",
     "col1_title": "📄 1. 職位描述 (JD)" if is_zh else "📄 1. Job Description (JD)",
     "col1_caption": "📦 *支援多檔案上傳｜單檔上限 200 MB*" if is_zh else "📦 *Supports multiple files | Max 200 MB/file*",
     "input_mode": "輸入方式" if is_zh else "Input Method",
@@ -72,33 +72,24 @@ ui_labels = {
     "col3_caption": "💡 *補充說明與團隊特定要求*" if is_zh else "💡 *Custom hiring criteria & preferences*",
     "special_req_ph": "例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作\n- 優先考慮具備金融背景者" if is_zh else "E.g.,\n- Must be fluent in Cantonese/English\n- 5 days on-site required\n- Prior banking background preferred",
     
-    "run_btn": "🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis)" if is_zh else "🚀 Run High-Level Talent Science & Compliance Audit",
-    # 優化後的加載提示詞 (去老土感)
-    "spinner_msg": "🚀 智析演算中：正在進行深度人才科學比對與合規風險審查..." if is_zh else "🚀 Analyzing: Executing Talent Science & ISO 42001 Compliance Audit...",
+    "run_btn": "🚀 啟動高階人才科學與深度合規審查 (Run Audit & Analysis)" if is_zh else "🚀 Run High-Level Talent Science & Compliance Audit",
+    "spinner_msg": "🚀 智析演算中：正在建立履歷證據鏈、拆解分數與進行風險反證審查..." if is_zh else "🚀 Analyzing: Building Evidence Table, Score Breakdown & Risk Flags...",
     
     # Dashboard Titles
-    "dash_sec1": "📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)" if is_zh else "📊 1. Strategic Match & Talent Density",
+    "dash_sec1": "📊 1. 招聘決策總結與多維分數拆解 (Fit Summary & Score Breakdown)" if is_zh else "📊 1. Fit Summary & Multi-Score Breakdown",
     "overall_score": "綜合匹配得分 (Overall Score)" if is_zh else "Overall Score",
-    "tier_label": "評級 (Tier)：{}" if is_zh else "Tier Rating: {}",
-    "special_audit_title": "🎯 **特殊要求合規審查 (Special Requirements Audit):**" if is_zh else "🎯 **Special Requirements Audit:**",
+    "confidence": "評估可信度 (Confidence Level)：{}" if is_zh else "Confidence Level: {}",
+    "recommendation": "決策建議 (Final Recommendation)：{}" if is_zh else "Recommendation: {}",
     
-    "dash_sec2": "⚖️ 2. AI 治理與合規審查 (AIGP & ISO 42001 Audit)" if is_zh else "⚖️ 2. AI Governance & Compliance Audit (AIGP & ISO 42001)",
-    "dash_sec2_sub": "⚠️ *依據高風險 AI 系統管理框架，本系統提供以下決策輔助與風險緩解建議。*" if is_zh else "⚠️ *Under High-Risk AI System Frameworks, the system provides decision support and risk controls.*",
-    "explainability": "🔍 **決策透明度與可解釋性 (Transparency & Explainability):**" if is_zh else "🔍 **Transparency & Explainability:**",
-    "fairness": "⚖️ **公平性與偏見緩解 (Bias & Fairness Assessment):**" if is_zh else "⚖️ **Bias & Fairness Assessment:**",
-    "hitl": "👨‍⚖️ **人類監督介入點 (Human-in-the-Loop, HITL):**" if is_zh else "👨‍⚖️ **Human-in-the-Loop (HITL) Triggers:**",
-    "risk_control": "🛡️ **ISO 42001 風險管控行動 (Risk Controls):**" if is_zh else "🛡️ **ISO 42001 Risk Controls:**",
+    "dash_sec2": "📜 2. 履歷可追溯證據鏈 (ISO 42001 Evidence Table)" if is_zh else "📜 2. ISO 42001 Evidence Table",
+    "evidence_sub": "⚠️ *依據 ISO 42001 可追溯性要求，以下結論皆有履歷具體原文支撐。*" if is_zh else "⚠️ *Under ISO 42001 Traceability rules, all claims are mapped directly to CV source text.*",
     
-    "dash_sec3": "🏢 3. 組織契約與深層動機 (Org. Contract & Career Drivers)" if is_zh else "🏢 3. Organizational Contract & Career Drivers",
-    "org_contract": "🤝 **組織用人模型 (Organizational Contract Fit):**" if is_zh else "🤝 **Organizational Contract Fit:**",
-    "primary_driver": "🔥 **核心驅動力 (Primary Driver):** {}" if is_zh else "🔥 **Primary Driver:** {}",
-    "offer_strategy": "💡 **專屬 Offer 說服策略 (Tailored Pitch Strategy):**" if is_zh else "💡 **Tailored Offer Pitch Strategy:**",
+    "dash_sec3": "🛡️ 3. 風險反證與可操作偏見控制 (Risk Flags & Anti-Bias Rules)" if is_zh else "🛡️ 3. Risk Flags & Anti-Bias Controls",
+    "hitl_title": "👨‍⚖️ **人類監督與核實項目 (Human-in-the-Loop Triggers):**" if is_zh else "👨‍⚖️ **Human-in-the-Loop (HITL) Triggers:**",
+    "bias_rules_title": "⚖️ **可操作偏見控制規則 (Operational Anti-Bias Rules):**" if is_zh else "⚖️ **Operational Anti-Bias Rules:**",
     
-    "dash_sec4": "🎯 4. 實戰行為面試指南 (Behavioral STAR Interview)" if is_zh else "🎯 4. Behavioral STAR Interview Guide",
-    "star_sub": "💡 *管治原則：嚴禁使用「假設性問題」，只探究真實歷史行為以預測未來表現。*" if is_zh else "💡 *Governance Rule: No hypothetical questions. Evaluate past behaviors to predict future performance.*",
-    "kpi_focus": "📌 核心指標 (KPI Focus)：{}" if is_zh else "📌 KPI Focus: {}",
-    "star_q": "🗣️ **歷史行為提問 (Behavioral Question)：** {}" if is_zh else "🗣️ **Behavioral Question:** {}",
-    "star_probe": "🕵️ **測謊與深挖追問 (Anti-BS Probe)：** {}" if is_zh else "🕵️ **Anti-BS Probe:** {}"
+    "dash_sec4": "🎯 4. EA to MD 專屬結構化行為面試指南 (Behavioral STAR Probes)" if is_zh else "🎯 4. EA to MD Behavioral STAR Interview Probes",
+    "star_sub": "💡 *聚焦預判需求、接受改動、高壓精準度與極佳 EQ 持份者溝通。*" if is_zh else "💡 *Focusing on Proactivity, Adaptability, High-Pressure Accuracy & Executive EQ.*",
 }
 
 # Sidebar: 設定與 Provider 處理
@@ -255,7 +246,7 @@ def run_ai_analysis(provider, api_key, prompt):
         response = client.chat.completions.create(
             model=models[provider],
             messages=[
-                {"role": "system", "content": "You are a professional HR Director and AI Governance Advisory system that outputs raw JSON only."},
+                {"role": "system", "content": "You are an Executive Talent Acquisition Partner and Certified AI Governance Officer outputting raw JSON only."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.2,
@@ -271,12 +262,12 @@ if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
     else:
         with st.spinner(ui_labels["spinner_msg"]):
             try:
-                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations (e.g. JD, CV, AIGP, STAR, IT, ASMTP) if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
+                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations (e.g. JD, CV, AIGP, STAR, IT, ASMTP, MD, EA) if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
                 
-                # 資深 HR Director 賦能 Prompt
+                # 高級 ISO 42001 + 拆解 + 反證 + EA STAR 專屬 Prompt
                 prompt = f"""
-You are an exceptionally experienced Senior HR Director and Strategic Talent Advisory Consultant operating at the board/executive level in Hong Kong.
-Analyze the provided Job Description (JD) and Candidate CV with deep HR acumen, strategic foresight, and rigid ISO 42001 / AIGP compliance awareness.
+You are an Executive Talent Acquisition Director and Senior AI Governance Lead in Hong Kong.
+Analyze the JD and CV for an **Executive Assistant to Managing Director (EA to MD)** role under strict ISO 42001 Audit principles (Traceability, Transparency, Counter-Evidence).
 
 Language Requirement:
 {lang_instruction}
@@ -284,37 +275,62 @@ Language Requirement:
 Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
 
-### HR Evaluation & Logic Rules:
-1. **Talent Density Categorization:** 
-   - Candidates with high transferable soft skills (e.g., CS degree + Cabin Crew crisis response) must be classified as **B-Player (高可塑性跨界人才 / High Potential)** rather than C-Player, even if hard industry experience (e.g., Construction) is missing.
-2. **Organizational Contract Realism:** 
-   - Analyze the candidate's genuine driver including practical career hurdles (e.g., urgent need for ASMTP visa sponsorship vs long-term career ambition in executive management).
-3. **Avoid Boilerplate Claims:** 
-   - Quote exact, concrete facts from the CV (e.g., ASMTP visa, 2 years cabin crew, CS degree, Cantonese fluency level, HKD 20K expected salary).
-4. **Tone:** Strategic HR Advisory tone suitable for presenting to a Managing Director. Balance candidate upside against administrative/visa risks.
+### Mandatory Analytical Framework:
+1. **Fit Summary:** Provide a 1-sentence verdict (Suitable / Partially Suitable / Unsuitable), 3 core reasons to hire, and 3 core risk/mismatch reasons.
+2. **Detailed Score Breakdown (0-100):** Break down the total score into:
+   - Hard Requirements (Degree, YOE, Language, Visa)
+   - Core Competencies (Independence, Executive Support, EQ)
+   - Industry Match (Construction/Engineering/Contractor domain)
+   - Style & Cultural Fit (Free-hand, Proactivity, High-pressure accuracy)
+   - Risk Penalty Deductions (Jumpiness, Language Gaps, Visa dependency)
+3. **Evidence Table (Traceability):** List 3-4 key analytical claims. For EACH claim, provide the exact quote from the CV, the section/company name, and a confidence level (High/Medium/Low).
+4. **Counter-Evidence & Risk Flags:** 
+   - Highlight potential Halo Effect/Single-Signal Bias (e.g. Do NOT assume lack of domain knowledge equals inability to predict boss's needs).
+   - Identify specific risks (Job hopping, Employment gaps, Language/Visa hurdles like ASMTP).
+5. **EA to MD Specific STAR Probes:** Focus specifically on:
+   - Predicting boss's unstated needs (Proactivity under Free-hand management).
+   - Handling last-minute schedule/crisis changes with accuracy.
+   - Managing relationship with demanding/firm-principled executives.
 
 Format your output STRICTLY in valid JSON matching this schema:
 {{
   "overall_score": 72,
-  "talent_density_tier": "B-Player (高可塑性跨界人才)",
-  "special_req_compliance": "Professional HR assessment balancing transferable attributes (e.g. high-pressure communication, IT logic) against specific domain gaps (e.g. Construction/Contractor background).",
-  "organizational_contract": "In-depth HR analysis on employment stability, visa dependencies (ASMTP sponsorship), and alignment between administrative tasks and career growth.",
-  "career_driver_analysis": {{
-    "primary_driver": "Candidate's core motivation based on actual background transitions.",
-    "offer_strategy": "Concrete advice for MD/HR to close this candidate (e.g., mentorship, IT-driven workflow optimization)."
+  "confidence_level": "High (高可信度)",
+  "final_recommendation": "Partially Suitable (勉強適合 - 建議先進行 Phone Screening 驗證簽證與語言)",
+  "fit_summary": {{
+    "one_sentence_verdict": "One-line executive summary.",
+    "top_3_reasons_to_hire": ["Reason 1", "Reason 2", "Reason 3"],
+    "top_3_risks_and_gaps": ["Risk 1", "Risk 2", "Risk 3"]
   }},
-  "aigp_governance_audit": {{
-    "transparency_explainability": "Key factors driving the score (high transferable soft skills vs domain/language/visa penalties).",
-    "human_in_the_loop_flag": "Crucial administrative and operational verification points for HR (e.g., ASMTP visa transfer timeline, Cantonese fluency for contractor relations).",
-    "bias_and_fairness": "Fairness assessment: Warning against Prestige/Non-traditional Background Bias.",
-    "iso42001_risk_control": "1-2 concrete risk control steps for hiring manager before final decision (e.g., phone screen for visa/language, case study)."
+  "score_breakdown": {{
+    "hard_requirements_score": "80/100 (說明)",
+    "core_competencies_score": "85/100 (說明)",
+    "industry_match_score": "30/100 (說明)",
+    "style_cultural_fit_score": "88/100 (說明)",
+    "risk_penalties_deduction": "-15 分 (原因)"
   }},
-  "sourcing_expansion": "Unconventional sourcing advice.",
-  "behavioral_star_questions": [
+  "evidence_table": [
     {{
-      "kpi_focus": "Specific competency (e.g., Free-hand Proactivity / Stakeholder Crisis Mgt)",
-      "question": "Sharp, realistic past-behavioral STAR question.",
-      "anti_bs_probe": "Sharp follow-up probe to verify real impact and prevent rehearsed answers."
+      "claim": "分析結論...",
+      "cv_quote": "履歷具體引用內文...",
+      "source_section": "來源段落/公司名稱...",
+      "confidence": "High / Medium / Low"
+    }}
+  ],
+  "risk_flags_and_counter_evidence": {{
+    "halo_bias_warning": "提醒避免因單一強項 (如空服員/大廠) 忽略短板，或因無建築經驗忽視其可轉移的預判能力。",
+    "administrative_visa_risk": "ASMTP 簽證轉移時間與成本風險評估。",
+    "language_and_culture_gap": "廣東話流利度對本地承辦商對接的實質影響。"
+  }},
+  "actionable_anti_bias_rules": [
+    "Rule 1: 不因缺乏建築背景單獨淘汰，著重評估可轉移之專案管理能力。",
+    "Rule 2: 簽證與廣東話流利度必須由 HR 進行人手 Phone Screen 確認，AI 不作最終決定。"
+  ],
+  "ea_behavioral_star_probes": [
+    {{
+      "kpi_focus": "預判老闆需求 (Proactivity under Free-hand)",
+      "question": "過去如何在主管沒有明確指示下，主動預判風險並完成任務的具體案例？",
+      "anti_bs_probe": "你是如何確認主管的真正意圖？如果當時預判錯誤，你如何修正？"
     }}
   ]
 }}
@@ -333,59 +349,64 @@ Candidate CV:
                 clean_json = json_match.group(0) if json_match else raw_response.strip()
                 data = json.loads(clean_json)
                 
-                # Dashboard Visualization
+                # ================= Dashboard Visualization =================
+                # Sec 1: 決策總結與分數拆解
                 st.markdown(f"## {ui_labels['dash_sec1']}")
-                colA, colB = st.columns(2)
+                colA, colB = st.columns([1, 2])
                 with colA:
                     st.metric(label=ui_labels["overall_score"], value=f"{data['overall_score']} / 100")
                     st.progress(data['overall_score'] / 100)
+                    st.info(ui_labels["confidence"].format(data.get('confidence_level', 'High')))
+                    st.success(ui_labels["recommendation"].format(data.get('final_recommendation', 'Conditional Move')))
+
                 with colB:
-                    tier = data['talent_density_tier']
-                    tier_str = ui_labels["tier_label"].format(tier)
-                    if any(x in tier for x in ["A", "磁石"]):
-                        st.success(f"🏆 {tier_str}")
-                    elif any(x in tier for x in ["B", "中流", "潛力", "可塑", "Growth"]):
-                        st.info(f"👍 {tier_str}")
-                    else:
-                        st.error(f"⚠️ {tier_str}")
+                    st.markdown(f"**📌 一句話總結 (Verdict):** {data['fit_summary']['one_sentence_verdict']}")
+                    sub_c1, sub_c2 = st.columns(2)
+                    with sub_c1:
+                        st.markdown("**✅ 建議聘用 3 大理由：**")
+                        for r in data['fit_summary']['top_3_reasons_to_hire']:
+                            st.write(f"- {r}")
+                    with sub_c2:
+                        st.markdown("**⚠️ 核心風險 3 大隱憂：**")
+                        for g in data['fit_summary']['top_3_risks_and_gaps']:
+                            st.write(f"- {g}")
 
-                if special_reqs.strip():
-                    st.info(f"{ui_labels['special_audit_title']}\n\n{data.get('special_req_compliance', '')}")
+                st.markdown("### 📊 五維分數拆解 (Detailed Sub-Scores)")
+                sb = data['score_breakdown']
+                m1, m2, m3, m4, m5 = st.columns(5)
+                m1.metric("硬性條件", sb['hard_requirements_score'])
+                m2.metric("核心能力", sb['core_competencies_score'])
+                m3.metric("行業匹配", sb['industry_match_score'])
+                m4.metric("風格匹配", sb['style_cultural_fit_score'])
+                m5.metric("風險扣分", sb['risk_penalties_deduction'])
 
                 st.markdown("---")
+                # Sec 2: 履歷證據鏈 Table
                 st.markdown(f"## {ui_labels['dash_sec2']}")
-                st.caption(ui_labels["dash_sec2_sub"])
-                
-                gov1, gov2 = st.columns(2)
-                with gov1:
-                    st.markdown(ui_labels["explainability"])
-                    st.write(data['aigp_governance_audit']['transparency_explainability'])
-                    
-                    st.markdown(ui_labels["fairness"])
-                    st.write(data['aigp_governance_audit']['bias_and_fairness'])
-                
-                with gov2:
-                    st.error(f"{ui_labels['hitl']}\n\n{data['aigp_governance_audit']['human_in_the_loop_flag']}")
-                    st.warning(f"{ui_labels['risk_control']}\n\n{data['aigp_governance_audit']['iso42001_risk_control']}")
+                st.caption(ui_labels["evidence_sub"])
+                st.table(data['evidence_table'])
 
                 st.markdown("---")
+                # Sec 3: 風險反證與 Anti-Bias
                 st.markdown(f"## {ui_labels['dash_sec3']}")
-                strat1, strat2 = st.columns(2)
-                with strat1:
-                    st.markdown(ui_labels["org_contract"])
-                    st.write(data['organizational_contract'])
-                with strat2:
-                    st.markdown(ui_labels["primary_driver"].format(data['career_driver_analysis']['primary_driver']))
-                    st.markdown(ui_labels["offer_strategy"])
-                    st.write(data['career_driver_analysis']['offer_strategy'])
+                rf = data['risk_flags_and_counter_evidence']
+                col_r1, col_r2 = st.columns(2)
+                with col_r1:
+                    st.warning(f"**👁️ 光環/單一訊號偏見預警:**\n\n{rf['halo_bias_warning']}")
+                    st.error(f"**🛂 簽證行政成本風險 (ASMTP):**\n\n{rf['administrative_visa_risk']}")
+                with col_r2:
+                    st.info(f"**🗣️ 語言與文化匹配風險:**\n\n{rf['language_and_culture_gap']}")
+                    st.markdown(ui_labels["bias_rules_title"])
+                    for rule in data['actionable_anti_bias_rules']:
+                        st.write(f"- {rule}")
 
                 st.markdown("---")
+                # Sec 4: EA 專屬 STAR 提問
                 st.markdown(f"## {ui_labels['dash_sec4']}")
-                st.caption(ui_labels["star_sub"])
-                for idx, q in enumerate(data['behavioral_star_questions'], 1):
-                    with st.expander(ui_labels["kpi_focus"].format(q['kpi_focus'])):
-                        st.markdown(ui_labels["star_q"].format(q['question']))
-                        st.markdown(ui_labels["star_probe"].format(q['anti_bs_probe']))
+                for idx, q in enumerate(data['ea_behavioral_star_probes'], 1):
+                    with st.expander(f"📌 EA 核心能力 (KPI Focus)：{q['kpi_focus']}"):
+                        st.markdown(f"**🗣️ 行為提問 (STAR Question)：** {q['question']}")
+                        st.markdown(f"**🕵️ 深挖追問 (Anti-BS Probe)：** {q['anti_bs_probe']}")
                         
             except Exception as e:
                 st.error(f"❌ Analysis Error / 分析過程出現錯誤: {str(e)}")
