@@ -39,14 +39,14 @@ ui_labels = {
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     "framework_title": "🧠 人才科學與管治框架" if is_zh else "🧠 Talent Science & Governance",
     "framework_body": """
-    - **人才密度 (Talent Density):** 識別 A 級玩家。
-    - **組織契約 (Org. Contract):** 區分承諾型與交易型。
-    - **ISO 42001 管治:** 落實高風險 AI 系統風險管控。
+    - **人才密度 (Talent Density):** 精準辨識 A/B 級戰略人才。
+    - **組織契約 (Org. Contract):** 洞察承諾型與交易型聘用動機。
+    - **ISO 42001 管治:** 落實高風險 AI 系統之決策風險管控。
     - **AIGP 合規:** 確保 HITL (人類監督) 與去偏見 (Bias Mitigation)。
     """ if is_zh else """
-    - **Talent Density:** Identify A-Players.
-    - **Org. Contract:** Commitment vs. Transactional fit.
-    - **ISO 42001:** High-risk AI risk management.
+    - **Talent Density:** Identify strategic A/B-Players.
+    - **Org. Contract:** Commitment vs. Transactional motivators.
+    - **ISO 42001:** High-risk AI decision controls.
     - **AIGP Compliance:** Ensure HITL & Bias Mitigation.
     """,
     "governance_notice": "🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 合規指引。" if is_zh else "🔐 **Data Governance Notice:** Session-only operation with zero retention. Compliant with PDPO & EU AI Act guidance.",
@@ -73,7 +73,8 @@ ui_labels = {
     "special_req_ph": "例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作\n- 優先考慮具備金融背景者" if is_zh else "E.g.,\n- Must be fluent in Cantonese/English\n- 5 days on-site required\n- Prior banking background preferred",
     
     "run_btn": "🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis)" if is_zh else "🚀 Run High-Level Talent Science & Compliance Audit",
-    "spinner_msg": "資深 HR 顧問正結合人才科學與 ISO 42001 合規標準進行深度演算..." if is_zh else "Senior HR Advisory AI is executing deep Talent Science & ISO 42001 risk audit...",
+    # 優化後的加載提示詞 (去老土感)
+    "spinner_msg": "🚀 智析演算中：正在進行深度人才科學比對與合規風險審查..." if is_zh else "🚀 Analyzing: Executing Talent Science & ISO 42001 Compliance Audit...",
     
     # Dashboard Titles
     "dash_sec1": "📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)" if is_zh else "📊 1. Strategic Match & Talent Density",
@@ -143,7 +144,7 @@ with st.sidebar:
     st.divider()
     st.markdown(ui_labels["governance_notice"])
 
-# 強健的文件文字提取函數
+# 通用文件文字提取函數
 def extract_text_from_files(uploaded_files):
     if not uploaded_files:
         return ""
@@ -270,11 +271,11 @@ if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
     else:
         with st.spinner(ui_labels["spinner_msg"]):
             try:
-                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations (e.g. JD, CV, AIGP, STAR, IT) if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
+                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations (e.g. JD, CV, AIGP, STAR, IT, ASMTP) if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
                 
                 # 資深 HR Director 賦能 Prompt
                 prompt = f"""
-You are an exceptionally experienced Senior HR Director and Talent Advisory Consultant operating at the board/executive level in Hong Kong.
+You are an exceptionally experienced Senior HR Director and Strategic Talent Advisory Consultant operating at the board/executive level in Hong Kong.
 Analyze the provided Job Description (JD) and Candidate CV with deep HR acumen, strategic foresight, and rigid ISO 42001 / AIGP compliance awareness.
 
 Language Requirement:
@@ -283,33 +284,37 @@ Language Requirement:
 Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
 
-### HR Evaluation Guidelines:
-1. **Avoid Rigid Assumptions:** Do NOT conflate a lack of domain knowledge (e.g., construction) with a lack of soft skills (e.g., predicting boss's needs). Distinguish clearly between "Hard Industry Experience Gaps" and "Transferable Soft Skills".
-2. **Be Specific & Actionable:** Quote exact, concrete details from the CV (e.g., flight attendant experience, computer science degree, ASMTP visa status, Cantonese fluency level, salary expectations) rather than generic boilerplate feedback.
-3. **Professional HR Tone:** Write as a strategic HR partner advising a Managing Director (MD) or Line Manager. Balance risk warnings with talent potential.
+### HR Evaluation & Logic Rules:
+1. **Talent Density Categorization:** 
+   - Candidates with high transferable soft skills (e.g., CS degree + Cabin Crew crisis response) must be classified as **B-Player (高可塑性跨界人才 / High Potential)** rather than C-Player, even if hard industry experience (e.g., Construction) is missing.
+2. **Organizational Contract Realism:** 
+   - Analyze the candidate's genuine driver including practical career hurdles (e.g., urgent need for ASMTP visa sponsorship vs long-term career ambition in executive management).
+3. **Avoid Boilerplate Claims:** 
+   - Quote exact, concrete facts from the CV (e.g., ASMTP visa, 2 years cabin crew, CS degree, Cantonese fluency level, HKD 20K expected salary).
+4. **Tone:** Strategic HR Advisory tone suitable for presenting to a Managing Director. Balance candidate upside against administrative/visa risks.
 
 Format your output STRICTLY in valid JSON matching this schema:
 {{
-  "overall_score": 75,
+  "overall_score": 72,
   "talent_density_tier": "B-Player (高可塑性跨界人才)",
-  "special_req_compliance": "Provide a nuanced, professional HR assessment of how the candidate aligns with the special preferences. Distinguish clearly between Hard Industry Experience (e.g., Construction) and Transferable Attributes (e.g., Independence, Proactivity). Avoid lazy 'Fail' labels if soft skills are strong.",
-  "organizational_contract": "In-depth HR analysis on whether this is a Transactional Fit (e.g., short-term visa need/stepping stone) or Commitment Fit (long-term career growth), referencing specific career transitions in the CV.",
+  "special_req_compliance": "Professional HR assessment balancing transferable attributes (e.g. high-pressure communication, IT logic) against specific domain gaps (e.g. Construction/Contractor background).",
+  "organizational_contract": "In-depth HR analysis on employment stability, visa dependencies (ASMTP sponsorship), and alignment between administrative tasks and career growth.",
   "career_driver_analysis": {{
-    "primary_driver": "Identify the candidate's genuine career driver based on their actual background (e.g., transitioning from technical/cabin roles to executive support).",
-    "offer_strategy": "Concrete, strategic pitch advice for the MD/HR to close this candidate (e.g., emphasizing mentorship, technology integration, or clear progression)."
+    "primary_driver": "Candidate's core motivation based on actual background transitions.",
+    "offer_strategy": "Concrete advice for MD/HR to close this candidate (e.g., mentorship, IT-driven workflow optimization)."
   }},
   "aigp_governance_audit": {{
-    "transparency_explainability": "State clearly the key weighting factors driving this score (e.g., high score for analytical/crisis skills vs penalty for industry/language gaps).",
-    "human_in_the_loop_flag": "Highlight specific high-risk claims, gap areas, or administrative hurdles (e.g., ASMTP visa sponsorship, Cantonese fluency, career jumpiness) that MUST be validated human-to-human by HR/MD.",
-    "bias_and_fairness": "Fairness assessment: Warn against potential 'Prestige Bias' or 'Non-traditional Background Bias' that might cause the line manager to prematurely reject a high-potential candidate.",
-    "iso42001_risk_control": "Give 1-2 actionable risk mitigation steps for the Hiring Manager before making a final decision (e.g., phone screen for visa/language first, structured case study)."
+    "transparency_explainability": "Key factors driving the score (high transferable soft skills vs domain/language/visa penalties).",
+    "human_in_the_loop_flag": "Crucial administrative and operational verification points for HR (e.g., ASMTP visa transfer timeline, Cantonese fluency for contractor relations).",
+    "bias_and_fairness": "Fairness assessment: Warning against Prestige/Non-traditional Background Bias.",
+    "iso42001_risk_control": "1-2 concrete risk control steps for hiring manager before final decision (e.g., phone screen for visa/language, case study)."
   }},
-  "sourcing_expansion": "Unconventional sourcing advice for this role.",
+  "sourcing_expansion": "Unconventional sourcing advice.",
   "behavioral_star_questions": [
     {{
-      "kpi_focus": "Specific competency matching the JD & Special Reqs (e.g., Free-hand Proactivity / Crisis Stakeholder Mgt)",
-      "question": "A sharp, highly realistic past-behavioral STAR question probing real historical evidence.",
-      "anti_bs_probe": "A sharp follow-up probe specifically designed to verify authenticity and prevent rehearsed/generic answers."
+      "kpi_focus": "Specific competency (e.g., Free-hand Proactivity / Stakeholder Crisis Mgt)",
+      "question": "Sharp, realistic past-behavioral STAR question.",
+      "anti_bs_probe": "Sharp follow-up probe to verify real impact and prevent rehearsed answers."
     }}
   ]
 }}
@@ -339,7 +344,7 @@ Candidate CV:
                     tier_str = ui_labels["tier_label"].format(tier)
                     if any(x in tier for x in ["A", "磁石"]):
                         st.success(f"🏆 {tier_str}")
-                    elif any(x in tier for x in ["B", "中流", "潛力", "可塑"]):
+                    elif any(x in tier for x in ["B", "中流", "潛力", "可塑", "Growth"]):
                         st.info(f"👍 {tier_str}")
                     else:
                         st.error(f"⚠️ {tier_str}")
