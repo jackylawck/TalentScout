@@ -17,61 +17,131 @@ st.set_page_config(
 # 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
-# Sidebar: 設定、Multi-Provider 與 語言選擇
+# 語言選擇 (Sidebar 最頂層)
 with st.sidebar:
-    st.header("⚙️ 系統設定 (System Config)")
-    
-    # 語言自選區塊 (Language Selection: 二選一)
     output_lang = st.selectbox(
-        "🌐 選擇報告輸出語言 (Output Language)：",
+        "🌐 界面與報告語言 (UI & Output Language):",
         ["繁體中文 (Traditional Chinese)", "English (Full)"],
         index=0
     )
     st.divider()
+
+# UI 文字字典 (UI i18n Dictionary)
+is_zh = output_lang == "繁體中文 (Traditional Chinese)"
+
+ui_labels = {
+    "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
+    "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
+    "default_key": "使用系統預設免費 Key" if is_zh else "Use System Default Free Key",
+    "byok_key": "使用自備 AI API Key (自由選擇)" if is_zh else "Use Custom AI API Key (BYOK)",
+    "loaded_default": "✅ 已載入系統預設免費 Key (保護中)" if is_zh else "✅ Loaded system default key (Protected)",
+    "select_provider": "選擇你的 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
+    "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
+    "framework_title": "🧠 人才科學與管治框架" if is_zh else "🧠 Talent Science & Governance",
+    "framework_body": """
+    - **人才密度 (Talent Density):** 識別 A 級玩家。
+    - **組織契約 (Org. Contract):** 區分承諾型與交易型。
+    - **ISO 42001 管治:** 落實高風險 AI 系統風險管控。
+    - **AIGP 合規:** 確保 HITL (人類監督) 與去偏見 (Bias Mitigation)。
+    """ if is_zh else """
+    - **Talent Density:** Identify A-Players.
+    - **Org. Contract:** Commitment vs. Transactional fit.
+    - **ISO 42001:** High-risk AI risk management.
+    - **AIGP Compliance:** Ensure HITL & Bias Mitigation.
+    """,
+    "governance_notice": "🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 合規指引。" if is_zh else "🔐 **Data Governance Notice:** Session-only operation with zero retention. Compliant with PDPO & EU AI Act guidance.",
+    
+    # Header & Sections
+    "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
+    "subtitle": "🚀 **Universal AI-Driven Talent Science & Governance**｜內建 ISO 42001 與 AIGP 合規審查機制" if is_zh else "🚀 **Universal AI-Driven Talent Science & Governance**｜Embedded ISO 42001 & AIGP Audit Framework",
+    "col1_title": "📄 1. 職位描述 (JD)" if is_zh else "📄 1. Job Description (JD)",
+    "col1_caption": "📦 *支援多檔案上傳｜單檔上限 200 MB*" if is_zh else "📦 *Supports multiple files | Max 200 MB/file*",
+    "input_mode": "輸入方式" if is_zh else "Input Method",
+    "paste_text": "貼上文字" if is_zh else "Paste Text",
+    "upload_files": "上傳文件 (可多選)" if is_zh else "Upload Files",
+    "paste_jd_ph": "請貼上 JD 內容，包含職責與資格等..." if is_zh else "Paste JD content here including duties, requirements...",
+    "upload_jd_lbl": "上傳 JD 檔案 (PDF, DOCX, DOC)" if is_zh else "Upload JD Files (PDF, DOCX, DOC)",
+    "jd_read_success": "✅ 已順利讀取 {} 個 JD 檔案" if is_zh else "✅ Successfully read {} JD file(s)",
+    
+    "col2_title": "👤 2. 求職者履歷 (CV)" if is_zh else "👤 2. Candidate Resume (CV)",
+    "col2_caption": "📦 *支援多檔案上傳｜單檔上限 200 MB*" if is_zh else "📦 *Supports multiple files | Max 200 MB/file*",
+    "upload_cv_lbl": "上傳 CV 檔案 (PDF, DOCX, DOC)" if is_zh else "Upload CV Files (PDF, DOCX, DOC)",
+    "cv_read_success": "✅ 已順利讀取 {} 個 CV 檔案" if is_zh else "✅ Successfully read {} CV file(s)",
+    
+    "col3_title": "🎯 3. 特殊要求 (Preferences)" if is_zh else "🎯 3. Special Requirements",
+    "col3_caption": "💡 *補充說明與團隊特定要求*" if is_zh else "💡 *Custom hiring criteria & preferences*",
+    "special_req_ph": "例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作\n- 優先考慮具備金融背景者" if is_zh else "E.g.,\n- Must be fluent in Cantonese/English\n- 5 days on-site required\n- Prior banking background preferred",
+    
+    "run_btn": "🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis)" if is_zh else "🚀 Run High-Level Talent Science & Compliance Audit",
+    "spinner_msg": "AI 正在進行深度人才科學與 ISO 42001 合規演算..." if is_zh else "AI is executing deep Talent Science & ISO 42001 risk audit...",
+    
+    # Dashboard Titles
+    "dash_sec1": "📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)" if is_zh else "📊 1. Strategic Match & Talent Density",
+    "overall_score": "綜合匹配得分 (Overall Score)" if is_zh else "Overall Score",
+    "tier_label": "評級 (Tier)：{}" if is_zh else "Tier Rating: {}",
+    "special_audit_title": "🎯 **特殊要求合規審查 (Special Requirements Audit):**" if is_zh else "🎯 **Special Requirements Audit:**",
+    
+    "dash_sec2": "⚖️ 2. AI 治理與合規審查 (AIGP & ISO 42001 Audit)" if is_zh else "⚖️ 2. AI Governance & Compliance Audit (AIGP & ISO 42001)",
+    "dash_sec2_sub": "⚠️ *依據高風險 AI 系統管理框架，本系統提供以下決策輔助與風險緩解建議。*" if is_zh else "⚠️ *Under High-Risk AI System Frameworks, the system provides decision support and risk controls.*",
+    "explainability": "🔍 **決策透明度與可解釋性 (Transparency & Explainability):**" if is_zh else "🔍 **Transparency & Explainability:**",
+    "fairness": "⚖️ **公平性與偏見緩解 (Bias & Fairness Assessment):**" if is_zh else "⚖️ **Bias & Fairness Assessment:**",
+    "hitl": "👨‍⚖️ **人類監督介入點 (Human-in-the-Loop, HITL):**" if is_zh else "👨‍⚖️ **Human-in-the-Loop (HITL) Triggers:**",
+    "risk_control": "🛡️ **ISO 42001 風險管控行動 (Risk Controls):**" if is_zh else "🛡️ **ISO 42001 Risk Controls:**",
+    
+    "dash_sec3": "🏢 3. 組織契約與深層動機 (Org. Contract & Career Drivers)" if is_zh else "🏢 3. Organizational Contract & Career Drivers",
+    "org_contract": "🤝 **組織用人模型 (Organizational Contract Fit):**" if is_zh else "🤝 **Organizational Contract Fit:**",
+    "primary_driver": "🔥 **核心驅動力 (Primary Driver):** {}" if is_zh else "🔥 **Primary Driver:** {}",
+    "offer_strategy": "💡 **專屬 Offer 說服策略 (Tailored Pitch Strategy):**" if is_zh else "💡 **Tailored Offer Pitch Strategy:**",
+    
+    "dash_sec4": "🎯 4. 實戰行為面試指南 (Behavioral STAR Interview)" if is_zh else "🎯 4. Behavioral STAR Interview Guide",
+    "star_sub": "💡 *管治原則：嚴禁使用「假設性問題」，只探究真實歷史行為以預測未來表現。*" if is_zh else "💡 *Governance Rule: No hypothetical questions. Evaluate past behaviors to predict future performance.*",
+    "kpi_focus": "📌 核心指標 (KPI Focus)：{}" if is_zh else "📌 KPI Focus: {}",
+    "star_q": "🗣️ **歷史行為提問 (Behavioral Question)：** {}" if is_zh else "🗣️ **Behavioral Question:** {}",
+    "star_probe": "🕵️ **測謊與深挖追問 (Anti-BS Probe)：** {}" if is_zh else "🕵️ **Anti-BS Probe:** {}"
+}
+
+# Sidebar: 設定與 Provider 處理
+with st.sidebar:
+    st.header(ui_labels["sys_config"])
     
     if default_token:
         key_mode = st.radio(
-            "選擇 AI 金鑰模式：",
-            ["使用系統預設免費 Key", "使用自己 AI API Key (自由選擇供應商)"],
+            ui_labels["key_mode"],
+            [ui_labels["default_key"], ui_labels["byok_key"]],
             index=0
         )
     else:
-        key_mode = "使用自己 AI API Key (自由選擇供應商)"
+        key_mode = ui_labels["byok_key"]
 
-    if key_mode == "使用系統預設免費 Key":
+    if key_mode == ui_labels["default_key"]:
         provider = "GitHub Models"
         api_key = default_token
-        st.success("✅ 已載入系統預設免費 Key (保護中，不顯示)")
+        st.success(ui_labels["loaded_default"])
     else:
         provider = st.selectbox(
-            "選擇你的 AI 供應商 (Provider)：",
+            ui_labels["select_provider"],
             ["OpenAI", "DeepSeek", "Google Gemini", "Groq", "GitHub Models"]
         )
         
         help_texts = {
-            "OpenAI": "輸入 OpenAI API Key (sk-...)",
-            "DeepSeek": "輸入 DeepSeek API Key (sk-...)",
-            "Google Gemini": "輸入 Google Gemini API Key (AIzaSy...)",
-            "Groq": "輸入 Groq API Key (gsk_...)",
-            "GitHub Models": "輸入 GitHub Personal Access Token (ghp_...)"
+            "OpenAI": "OpenAI API Key (sk-...)",
+            "DeepSeek": "DeepSeek API Key (sk-...)",
+            "Google Gemini": "Google Gemini API Key (AIzaSy...)",
+            "Groq": "Groq API Key (gsk_...)",
+            "GitHub Models": "GitHub Personal Access Token (ghp_...)"
         }
         
         api_key = st.text_input(
-            f"輸入你的 {provider} Key", 
+            ui_labels["enter_key"].format(provider), 
             type="password",
             placeholder=help_texts[provider]
         )
 
     st.divider()
-    st.markdown("### 🧠 人才科學與管治框架")
-    st.markdown("""
-    - **人才密度 (Talent Density):** 識別 A 級玩家。
-    - **組織契約 (Org. Contract):** 區分承諾型與交易型。
-    - **ISO 42001 管治:** 落實高風險 AI 系統風險管控。
-    - **AIGP 合規:** 確保 HITL (人類監督) 與去偏見 (Bias Mitigation)。
-    """)
+    st.markdown(ui_labels["framework_title"])
+    st.markdown(ui_labels["framework_body"])
     st.divider()
-    st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 高風險系統合規指引。")
+    st.markdown(ui_labels["governance_notice"])
 
 # 強健的文件文字提取函數
 def extract_text_from_files(uploaded_files):
@@ -97,31 +167,31 @@ def extract_text_from_files(uploaded_files):
                     file_text += para.text + "\n"
             
             if file_text.strip():
-                combined_text += f"\n--- [檔案來源: {file.name}] ---\n" + file_text
+                combined_text += f"\n--- [Source: {file.name}] ---\n" + file_text
             else:
-                st.warning(f"⚠️ 檔案 `{file.name}` 未能讀取到文字（可能為掃描檔圖片或舊式 `.doc` 二進位格式），建議在 Word 開啟後「另存新檔」為 `.docx` 或 `.pdf`。")
+                st.warning(f"⚠️ `{file.name}` empty or unsupported binary `.doc`. Please 'Save As' `.docx` or `.pdf`.")
         except Exception as e:
-            st.error(f"❌ 解析檔案 `{file.name}` 失敗！舊版 Word 97-2003 (`.doc`) 常有加密問題，請在 Word 開啟並「另存新檔」為 `.docx` 或 `.pdf` 後重新上傳。")
+            st.error(f"❌ Read failed for `{file.name}`. Please 'Save As' `.docx` or `.pdf`.")
             
     return combined_text
 
 # Header
-st.title("🎯 慧聘 · 智析官 (TalentScout AI)")
-st.caption("🚀 **Universal AI-Driven Talent Science & Governance**｜內建 ISO 42001 與 AIGP 合規審查機制")
+st.title(ui_labels["title"])
+st.caption(ui_labels["subtitle"])
 
-# Main UI: 三欄式上傳與輸入區
+# Main UI: 三欄式上傳區
 col1, col2, col3 = st.columns([1, 1, 1])
 
 with col1:
-    st.subheader("📄 1. 職位描述 (JD)")
-    st.caption("📦 *支援多檔案上傳｜單檔大小上限：200 MB*")
-    jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳文件 (可多選)"], key="jd_type", horizontal=True)
+    st.subheader(ui_labels["col1_title"])
+    st.caption(ui_labels["col1_caption"])
+    jd_input_type = st.radio(ui_labels["input_mode"], [ui_labels["paste_text"], ui_labels["upload_files"]], key="jd_type", horizontal=True)
     jd_text = ""
-    if jd_input_type == "貼上文字":
-        jd_text = st.text_area("請貼上 JD 內容：", height=200, placeholder="包含職責、必備條件等...")
+    if jd_input_type == ui_labels["paste_text"]:
+        jd_text = st.text_area(ui_labels["paste_text"] + ":", height=200, placeholder=ui_labels["paste_jd_ph"])
     else:
         jd_files = st.file_uploader(
-            "上傳 JD 檔案 (PDF, DOCX, DOC)", 
+            ui_labels["upload_jd_lbl"], 
             type=["pdf", "docx", "doc"], 
             accept_multiple_files=True, 
             key="jd_files"
@@ -129,13 +199,13 @@ with col1:
         if jd_files:
             jd_text = extract_text_from_files(jd_files)
             if jd_text:
-                st.success(f"✅ 已順利讀取 {len(jd_files)} 個 JD 檔案內容")
+                st.success(ui_labels["jd_read_success"].format(len(jd_files)))
 
 with col2:
-    st.subheader("👤 2. 求職者履歷 (CV)")
-    st.caption("📦 *支援多檔案上傳｜單檔大小上限：200 MB*")
+    st.subheader(ui_labels["col2_title"])
+    st.caption(ui_labels["col2_caption"])
     cv_files = st.file_uploader(
-        "上傳 CV 檔案 (PDF, DOCX, DOC)", 
+        ui_labels["upload_cv_lbl"], 
         type=["pdf", "docx", "doc"], 
         accept_multiple_files=True, 
         key="cv_files"
@@ -144,15 +214,15 @@ with col2:
     if cv_files:
         cv_text = extract_text_from_files(cv_files)
         if cv_text:
-            st.success(f"✅ 已順利讀取 {len(cv_files)} 個 CV 檔案內容")
+            st.success(ui_labels["cv_read_success"].format(len(cv_files)))
 
 with col3:
-    st.subheader("🎯 3. 特殊要求 (Preferences)")
-    st.caption("💡 *補充說明與團隊特定要求*")
+    st.subheader(ui_labels["col3_title"])
+    st.caption(ui_labels["col3_caption"])
     special_reqs = st.text_area(
-        "輸入額外篩選條件（可留空）：", 
+        ui_labels["col3_title"] + ":", 
         height=200, 
-        placeholder="例如：\n- 必須精通廣東話/英語\n- 必須接受每週 5 天到現場工作\n- 優先考慮具備金融背景者\n- 期望薪酬不能超過 HKD 40K"
+        placeholder=ui_labels["special_req_ph"]
     )
 
 st.markdown("---")
@@ -192,28 +262,22 @@ def run_ai_analysis(provider, api_key, prompt):
         return response.choices[0].message.content.strip()
 
 # Analyze Button
-if st.button("🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis)", type="primary", use_container_width=True):
+if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
     if not api_key:
-        st.error(f"⚠️ 請在左側 Sidebar 輸入你的 {provider} API Key / Token！")
+        st.error("⚠️ Please enter API Key / Token!")
     elif not jd_text.strip() or not cv_text.strip():
-        st.warning("⚠️ 請同時提供有效的 JD 與 CV 內容！")
+        st.warning("⚠️ Please provide both valid JD and CV content!")
     else:
-        with st.spinner(f"AI 正在結合 ISO 42001 標準與 {provider} 引擎進行深度演算 ({output_lang})..."):
+        with st.spinner(ui_labels["spinner_msg"]):
             try:
-                # 設定 Prompt 的語言要求 (二選一)
-                lang_instructions = {
-                    "繁體中文 (Traditional Chinese)": "Provide the entire analysis strictly in Professional Traditional Chinese (繁體中文). Do not use English unless it is an industry-standard acronym or title.",
-                    "English (Full)": "Provide the entire analysis strictly in Professional Executive English."
-                }
+                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
                 
                 prompt = f"""
 You are a top-tier HR Executive and Certified AI Governance Professional (AIGP) operating at the board level in Hong Kong.
-Your task is to analyze the provided JD and CV. Because AI recruitment is considered a "High-Risk AI System" under global frameworks (e.g., EU AI Act), your analysis MUST strictly adhere to ISO 42001 risk management principles.
-
-Apply Talent Science (Talent Density, Organizational Contract, Career Drivers) AND conduct a rigorous AI Governance Audit (HITL, Bias Mitigation, Transparency).
+Analyze the provided JD and CV under ISO 42001 risk management and Talent Science principles.
 
 Language Requirement:
-{lang_instructions[output_lang]}
+{lang_instruction}
 
 Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
@@ -229,10 +293,10 @@ Format your output STRICTLY in valid JSON matching this schema:
     "offer_strategy": "Tailored pitch strategy..."
   }},
   "aigp_governance_audit": {{
-    "transparency_explainability": "Explainability: Briefly state the exact core algorithmic weights/factors that drove this score (Why this score?).",
-    "human_in_the_loop_flag": "HITL requirement: Specify which impressive claims in the CV MUST be verified by a human (Reference Check) to prevent Automation Bias.",
-    "bias_and_fairness": "Fairness Assessment: Identify any potential disparate impact, age proxies, gendered language, or prestige bias (Halo effect) in this evaluation.",
-    "iso42001_risk_control": "Risk Control: Recommend one specific action for the hiring manager to mitigate the deployment risk of relying on this AI output."
+    "transparency_explainability": "Explainability: Core algorithmic weights driving this score.",
+    "human_in_the_loop_flag": "HITL requirement: Specific claims in CV that MUST be verified by a human.",
+    "bias_and_fairness": "Fairness Assessment: Identify disparate impact, age proxies, or halo effect.",
+    "iso42001_risk_control": "Risk Control: Specific action for hiring manager to mitigate AI risk."
   }},
   "sourcing_expansion": "Unconventional sourcing suggestions.",
   "behavioral_star_questions": [
@@ -244,7 +308,7 @@ Format your output STRICTLY in valid JSON matching this schema:
   ]
 }}
 
-Output ONLY the raw JSON string, without markdown formatting or code blocks.
+Output ONLY raw JSON.
 
 Job Description (JD):
 {jd_text}
@@ -255,65 +319,62 @@ Candidate CV:
                 raw_response = run_ai_analysis(provider, api_key, prompt)
                 
                 json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
-                if json_match:
-                    clean_json = json_match.group(0)
-                else:
-                    clean_json = raw_response.strip()
-
+                clean_json = json_match.group(0) if json_match else raw_response.strip()
                 data = json.loads(clean_json)
                 
-                # Dashboard Visualization
-                st.markdown("## 📊 1. 戰略匹配與人才密度 (Strategic Match & Talent Density)")
+                # Dashboard Visualization (Dynamic Language)
+                st.markdown(f"## {ui_labels['dash_sec1']}")
                 colA, colB = st.columns(2)
                 with colA:
-                    st.metric(label="綜合匹配得分 (Overall Score)", value=f"{data['overall_score']} / 100")
+                    st.metric(label=ui_labels["overall_score"], value=f"{data['overall_score']} / 100")
                     st.progress(data['overall_score'] / 100)
                 with colB:
                     tier = data['talent_density_tier']
-                    if "A" in tier or "磁石" in tier:
-                        st.success(f"🏆 評級 (Tier)：{tier}")
-                    elif "B" in tier or "中流" in tier or "潛力" in tier:
-                        st.info(f"👍 評級 (Tier)：{tier}")
+                    tier_str = ui_labels["tier_label"].format(tier)
+                    if any(x in tier for x in ["A", "磁石"]):
+                        st.success(f"🏆 {tier_str}")
+                    elif any(x in tier for x in ["B", "中流", "潛力"]):
+                        st.info(f"👍 {tier_str}")
                     else:
-                        st.error(f"⚠️ 評級 (Tier)：{tier}")
+                        st.error(f"⚠️ {tier_str}")
 
                 if special_reqs.strip():
-                    st.info(f"🎯 **特殊要求合規審查 (Special Requirements Audit):**\n\n{data.get('special_req_compliance', '已納入評估')}")
+                    st.info(f"{ui_labels['special_audit_title']}\n\n{data.get('special_req_compliance', '')}")
 
                 st.markdown("---")
-                st.markdown("## ⚖️ 2. AI 治理與合規審查 (AIGP & ISO 42001 Audit)")
-                st.caption("⚠️ *依據高風險 AI 系統管理框架，本系統提供以下決策輔助與風險緩解建議。*")
+                st.markdown(f"## {ui_labels['dash_sec2']}")
+                st.caption(ui_labels["dash_sec2_sub"])
                 
                 gov1, gov2 = st.columns(2)
                 with gov1:
-                    st.markdown("**🔍 決策透明度與可解釋性 (Transparency & Explainability):**")
+                    st.markdown(ui_labels["explainability"])
                     st.write(data['aigp_governance_audit']['transparency_explainability'])
                     
-                    st.markdown("**⚖️ 公平性與偏見緩解 (Bias & Fairness Assessment):**")
+                    st.markdown(ui_labels["fairness"])
                     st.write(data['aigp_governance_audit']['bias_and_fairness'])
                 
                 with gov2:
-                    st.error(f"**👨‍⚖️ 人類監督介入點 (Human-in-the-Loop, HITL):**\n\n{data['aigp_governance_audit']['human_in_the_loop_flag']}")
-                    st.warning(f"**🛡️ ISO 42001 風險管控行動 (Risk Controls):**\n\n{data['aigp_governance_audit']['iso42001_risk_control']}")
+                    st.error(f"{ui_labels['hitl']}\n\n{data['aigp_governance_audit']['human_in_the_loop_flag']}")
+                    st.warning(f"{ui_labels['risk_control']}\n\n{data['aigp_governance_audit']['iso42001_risk_control']}")
 
                 st.markdown("---")
-                st.markdown("## 🏢 3. 組織契約與深層動機 (Org. Contract & Career Drivers)")
+                st.markdown(f"## {ui_labels['dash_sec3']}")
                 strat1, strat2 = st.columns(2)
                 with strat1:
-                    st.markdown("**🤝 組織用人模型 (Organizational Contract Fit):**")
+                    st.markdown(ui_labels["org_contract"])
                     st.write(data['organizational_contract'])
                 with strat2:
-                    st.markdown(f"**🔥 核心驅動力 (Primary Driver):** {data['career_driver_analysis']['primary_driver']}")
-                    st.markdown("**💡 專屬 Offer 說服策略 (Tailored Pitch Strategy):**")
+                    st.markdown(ui_labels["primary_driver"].format(data['career_driver_analysis']['primary_driver']))
+                    st.markdown(ui_labels["offer_strategy"])
                     st.write(data['career_driver_analysis']['offer_strategy'])
 
                 st.markdown("---")
-                st.markdown("## 🎯 4. 實戰行為面試指南 (Behavioral STAR Interview)")
-                st.caption("💡 *管治原則：嚴禁使用「假設性問題」，只探究真實歷史行為以預測未來表現。*")
+                st.markdown(f"## {ui_labels['dash_sec4']}")
+                st.caption(ui_labels["star_sub"])
                 for idx, q in enumerate(data['behavioral_star_questions'], 1):
-                    with st.expander(f"📌 核心指標 (KPI Focus)：{q['kpi_focus']}"):
-                        st.markdown(f"**🗣️ 歷史行為提問 (Behavioral Question)：** {q['question']}")
-                        st.markdown(f"**🕵️ 測謊與深挖追問 (Anti-BS Probe)：** {q['anti_bs_probe']}")
+                    with st.expander(ui_labels["kpi_focus"].format(q['kpi_focus'])):
+                        st.markdown(ui_labels["star_q"].format(q['question']))
+                        st.markdown(ui_labels["star_probe"].format(q['anti_bs_probe']))
                         
             except Exception as e:
-                st.error(f"❌ 分析過程出現錯誤 (請檢查 API Key 或網路狀態)：{str(e)}")
+                st.error(f"❌ Analysis Error / 分析過程出現錯誤: {str(e)}")
