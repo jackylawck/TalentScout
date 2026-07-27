@@ -28,7 +28,7 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典 (強化安全感與產品特色)
+# UI 文字字典 (修正所有前端標題與標籤)
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
@@ -38,7 +38,6 @@ ui_labels = {
     "select_provider": "選擇 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     
-    # 💡 重新設計：著重「資安安心」與「核心特色」
     "framework_title": "🛡️ 數據安全與系統特色" if is_zh else "🛡️ Privacy & Core Features",
     "framework_body": """
     **🔐 企業級私密防護 (Data Privacy):**
@@ -63,11 +62,36 @@ ui_labels = {
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
     "subtitle": "🚀 **企業級高階人才決策與風險合規評估系統**" if is_zh else "🚀 **Enterprise Talent Advisory & Compliance Audit System**",
-    "col1_title": "📄 1. 職位描述 (JD)",
-    "col2_title": "👤 2. 求職者履歷 (CV)",
-    "col3_title": "🎯 3. 特殊要求 (Preferences)",
+    "col1_title": "📄 1. 職位描述 (JD)" if is_zh else "📄 1. Job Description (JD)",
+    "col2_title": "👤 2. 求職者履歷 (CV)" if is_zh else "👤 2. Candidate Resume (CV)",
+    "col3_title": "🎯 3. 特殊要求 (Preferences)" if is_zh else "🎯 3. Special Requirements",
     "run_btn": "🚀 啟動高階人才科學與深度合規審查 (Run Audit)" if is_zh else "🚀 Run High-Level Talent Audit",
     "spinner_msg": "🚀 智析演算中：正在建立履歷證據鏈、拆解分數與進行風險反證..." if is_zh else "🚀 Analyzing: Building Evidence Table, Score Breakdown & Risk Flags...",
+
+    # Dashboard 靜態標籤 (動態語言開關)
+    "sec1_title": "📊 1. 決策總結 (Fit Summary)" if is_zh else "📊 1. Fit Summary",
+    "m_score": "綜合得分" if is_zh else "Overall Score",
+    "m_conf": "信心級別" if is_zh else "Confidence Level",
+    "m_rec": "最終建議" if is_zh else "Recommendation",
+    "m_next": "推進下一關" if is_zh else "Advance to Next Stage",
+    "verdict_title": "📌 執行摘要 (Verdict):" if is_zh else "📌 Executive Verdict:",
+    "score_breakdown_title": "📈 分數拆解 (Score Breakdown)" if is_zh else "📈 Detailed Score Breakdown",
+    "evidence_source": "證據來源" if is_zh else "Evidence Source",
+
+    "sec2_title": "📜 2. 履歷可追溯證據與反證 (Evidence & Counter-Evidence)" if is_zh else "📜 2. Traceable Evidence & Counter-Evidence",
+    "sec3_title": "🛡️ 3. 風險分層與偏見控制 (Risk Flags & Validation)" if is_zh else "🛡️ 3. Risk Flags & Anti-Bias Validation",
+    "hard_risks": "🚨 硬性風險 (Hard Risks - 必須查核):" if is_zh else "🚨 Hard Risks (Requires Immediate Verification):",
+    "soft_risks": "⚠️ 軟性風險 (Soft Risks - 面試觀察):" if is_zh else "⚠️ Soft Risks (Interview Observation Points):",
+    "bias_traps": "⚖️ 偏見陷阱防範 (Bias Traps):" if is_zh else "⚖️ Anti-Bias Guardrails:",
+    "missing_info": "❓ 缺失關鍵資訊 (Missing Info):" if is_zh else "❓ Missing Critical Information:",
+    "must_confirm": "🎯 Offer 前必確認 (Must Confirm):" if is_zh else "🎯 Must Confirm Before Offer:",
+
+    "sec4_title": "🎯 4. 結構化面試指南 (Structured Interview Probes)" if is_zh else "🎯 4. Structured Behavioral Interview Probes",
+    "sec4_sub": "💡 *包含測試意圖、正面指標 (Strong) 與負面警號 (Red Flag)*" if is_zh else "💡 *Includes testing purpose, strong indicators, and red flag answer patterns.*",
+    "probe_purpose": "🎯 測試目的:" if is_zh else "🎯 Testing Purpose:",
+    "probe_q": "🗣️ 面試提問:" if is_zh else "🗣️ Behavioral Question:",
+    "probe_strong": "✅ 優秀指標 (Strong):" if is_zh else "✅ Strong Indicator:",
+    "probe_red": "🚩 危險警號 (Red Flag):" if is_zh else "🚩 Red Flag Pattern:"
 }
 
 with st.sidebar:
@@ -114,9 +138,9 @@ st.caption(ui_labels["subtitle"])
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     st.subheader(ui_labels["col1_title"])
-    jd_input_type = st.radio("輸入", ["貼上文字", "上傳文件 (可多選)"], horizontal=True, key="jd_mode")
-    if jd_input_type == "貼上文字":
-        jd_text = st.text_area("JD 內容", height=200, placeholder="包含職責與資格等...", label_visibility="collapsed")
+    jd_input_type = st.radio("輸入", ["貼上文字", "上傳文件 (可多選)"] if is_zh else ["Paste Text", "Upload Files"], horizontal=True, key="jd_mode")
+    if jd_input_type in ["貼上文字", "Paste Text"]:
+        jd_text = st.text_area("JD 內容", height=200, placeholder="包含職責與資格等..." if is_zh else "Duties, requirements...", label_visibility="collapsed")
     else:
         jd_files = st.file_uploader("上傳 JD 檔案 (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], accept_multiple_files=True, key="jd_uploader")
         jd_text = extract_text_from_files(jd_files)
@@ -128,7 +152,7 @@ with col2:
 
 with col3:
     st.subheader(ui_labels["col3_title"])
-    special_reqs = st.text_area("補充說明與特定要求", height=200, placeholder="例如：\n- 必須精通廣東話/英語\n- 接受每週 5 天到現場工作", label_visibility="collapsed")
+    special_reqs = st.text_area("補充說明與特定要求", height=200, placeholder="例如：\n- 必須精通廣東話/英語" if is_zh else "E.g.,\n- Fluent in Cantonese/English", label_visibility="collapsed")
 
 st.markdown("---")
 
@@ -150,11 +174,11 @@ def run_ai_analysis(provider, api_key, prompt):
 
 if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
     if not api_key or not jd_text.strip() or not cv_text.strip():
-        st.warning("⚠️ 系統需要完整的 API Key, JD 與 CV 才能啟動。")
+        st.warning("⚠️ 系統需要完整的 API Key, JD 與 CV 才能啟動。" if is_zh else "⚠️ API Key, JD, and CV are required.")
     else:
         with st.spinner(ui_labels["spinner_msg"]):
             try:
-                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations (e.g. JD, CV, AIGP, STAR, IT, ASMTP, HR, KPI) if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
+                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis and JSON values strictly in Professional Executive English. Do not use any Chinese characters in any fields."
                 
                 prompt = f"""
 You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 guidelines. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, and stated preferences. Use evidence-based reasoning. Do not infer facts not supported by materials.
@@ -180,40 +204,40 @@ Format your output STRICTLY in valid JSON matching this exact schema:
     "one_sentence_verdict": "Clear executive summary."
   }},
   "score_breakdown": [
-    {{"dimension": "硬性條件 (Hard Requirements)", "score": "80/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
-    {{"dimension": "核心能力 (Core Competency)", "score": "85/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
-    {{"dimension": "行業匹配 (Industry Fit)", "score": "60/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
-    {{"dimension": "工作風格 (Style & Culture)", "score": "90/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
-    {{"dimension": "風險扣分 (Risk Deductions)", "score": "-10", "justification": "...", "evidence_type": "Direct / Inferred"}}
+    {{"dimension": "Hard Requirements / 硬性條件", "score": "80/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
+    {{"dimension": "Core Competency / 核心能力", "score": "85/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
+    {{"dimension": "Industry Fit / 行業匹配", "score": "60/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
+    {{"dimension": "Style & Culture / 工作風格", "score": "90/100", "justification": "...", "evidence_type": "Direct / Inferred"}},
+    {{"dimension": "Risk Deductions / 風險扣分", "score": "-10", "justification": "...", "evidence_type": "Direct / Inferred"}}
   ],
   "evidence_table": [
     {{
-      "claim": "正面或負面論點",
-      "cv_quote": "履歷精確原文引用",
-      "source_section": "經歷/公司段落",
+      "claim": "Statement of finding",
+      "cv_quote": "Exact quote from CV",
+      "source_section": "Section or company name",
       "confidence": "High / Medium / Low",
-      "counter_evidence": "反證 (例如: 具備高壓應變能力 -> 反證: 但無長期穩定行政經驗)"
+      "counter_evidence": "Counter-evidence or limitation"
     }}
   ],
   "risk_flags": {{
-    "hard_risks": ["必須人手確認的硬傷 (簽證/權限/語言)"],
-    "soft_risks": ["面試需觀察的軟性風險 (文化/跳槽)"],
-    "bias_traps": ["需避免的偏見 (例如不要因為某單一光環或單一缺失就下定論)"],
-    "missing_info": ["關鍵缺失資訊"]
+    "hard_risks": ["Hard risks requiring verification"],
+    "soft_risks": ["Soft risks requiring interview follow-up"],
+    "bias_traps": ["Potential bias traps to avoid"],
+    "missing_info": ["Missing critical information"]
   }},
   "interview_probes": [
     {{
-      "competency": "針對崗位的關鍵能力 (如預判需求/高壓決策)",
-      "testing_purpose": "這題想測試什麼？",
-      "question": "情境與行為問題 (STAR)",
-      "strong_indicator": "優秀回答特徵 (Strong-answer indicator)",
-      "red_flag": "警號回答特徵 (Red flag answer pattern)"
+      "competency": "Role-specific competency",
+      "testing_purpose": "What this question tests",
+      "question": "STAR behavioral question",
+      "strong_indicator": "Strong answer pattern",
+      "red_flag": "Red flag answer pattern"
     }}
   ],
   "final_guidance": {{
     "advance_to_next": "Yes / No / Conditional",
-    "next_stage_action": "下一步建議行動",
-    "must_confirm": ["Offer 前必須確認的事項"]
+    "next_stage_action": "Recommended next action",
+    "must_confirm": ["Items to confirm before offer"]
   }}
 }}
 
@@ -231,49 +255,49 @@ Candidate CV:
                 clean_json = json_match.group(0) if json_match else raw_response.strip()
                 data = json.loads(clean_json)
                 
-                # Dashboard Visualization
-                st.markdown(f"## 📊 1. 決策總結 (Fit Summary)")
+                # Dashboard Visualization (Dynamic Language Text)
+                st.markdown(f"## {ui_labels['sec1_title']}")
                 c1, c2, c3, c4 = st.columns(4)
-                c1.metric("綜合得分", f"{data['fit_summary']['overall_score']} / 100")
-                c2.metric("信心級別", data['fit_summary']['confidence_level'])
-                c3.metric("最終建議", data['fit_summary']['final_recommendation'])
-                c4.metric("推進下一關", data['final_guidance']['advance_to_next'])
+                c1.metric(ui_labels["m_score"], f"{data['fit_summary']['overall_score']} / 100")
+                c2.metric(ui_labels["m_conf"], data['fit_summary']['confidence_level'])
+                c3.metric(ui_labels["m_rec"], data['fit_summary']['final_recommendation'])
+                c4.metric(ui_labels["m_next"], data['final_guidance']['advance_to_next'])
                 
-                st.info(f"**📌 執行摘要 (Verdict):** {data['fit_summary']['one_sentence_verdict']}")
+                st.info(f"**{ui_labels['verdict_title']}** {data['fit_summary']['one_sentence_verdict']}")
                 
-                st.markdown("### 📈 分數拆解 (Score Breakdown)")
+                st.markdown(f"### {ui_labels['score_breakdown_title']}")
                 sb_cols = st.columns(len(data['score_breakdown']))
                 for idx, item in enumerate(data['score_breakdown']):
                     with sb_cols[idx]:
                         st.markdown(f"**{item['dimension']}**")
                         st.markdown(f"### {item['score']}")
                         st.caption(f"{item['justification']}")
-                        st.caption(f"*(證據來源: {item['evidence_type']})*")
+                        st.caption(f"*({ui_labels['evidence_source']}: {item['evidence_type']})*")
                 
                 st.markdown("---")
-                st.markdown(f"## 📜 2. 履歷可追溯證據與反證 (Evidence & Counter-Evidence)")
+                st.markdown(f"## {ui_labels['sec2_title']}")
                 st.table(data['evidence_table'])
                 
                 st.markdown("---")
-                st.markdown(f"## 🛡️ 3. 風險分層與偏見控制 (Risk Flags & Validation)")
+                st.markdown(f"## {ui_labels['sec3_title']}")
                 r1, r2 = st.columns(2)
                 with r1:
-                    st.error("**🚨 硬性風險 (Hard Risks - 必須查核):**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['hard_risks']]))
-                    st.warning("**⚠️ 軟性風險 (Soft Risks - 面試觀察):**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['soft_risks']]))
+                    st.error(f"**{ui_labels['hard_risks']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['hard_risks']]))
+                    st.warning(f"**{ui_labels['soft_risks']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['soft_risks']]))
                 with r2:
-                    st.info("**⚖️ 偏見陷阱防範 (Bias Traps):**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['bias_traps']]))
-                    st.markdown("**❓ 缺失關鍵資訊 (Missing Info):**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['missing_info']]))
-                    st.markdown("**🎯 Offer 前必確認 (Must Confirm):**\n" + "\n".join([f"- {x}" for x in data['final_guidance']['must_confirm']]))
+                    st.info(f"**{ui_labels['bias_traps']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['bias_traps']]))
+                    st.markdown(f"**{ui_labels['missing_info']}**\n" + "\n".join([f"- {x}" for x in data['risk_flags']['missing_info']]))
+                    st.markdown(f"**{ui_labels['must_confirm']}**\n" + "\n".join([f"- {x}" for x in data['final_guidance']['must_confirm']]))
                 
                 st.markdown("---")
-                st.markdown(f"## 🎯 4. 結構化面試指南 (Structured Interview Probes)")
-                st.caption("💡 *包含測試意圖、正面指標 (Strong) 與負面警號 (Red Flag)*")
+                st.markdown(f"## {ui_labels['sec4_title']}")
+                st.caption(ui_labels["sec4_sub"])
                 for q in data['interview_probes']:
                     with st.expander(f"📌 {q['competency']}"):
-                        st.markdown(f"**🎯 測試目的:** {q['testing_purpose']}")
-                        st.markdown(f"**🗣️ 面試提問:** {q['question']}")
-                        st.success(f"**✅ 優秀指標 (Strong):** {q['strong_indicator']}")
-                        st.error(f"**🚩 危險警號 (Red Flag):** {q['red_flag']}")
+                        st.markdown(f"**{ui_labels['probe_purpose']}** {q['testing_purpose']}")
+                        st.markdown(f"**{ui_labels['probe_q']}** {q['question']}")
+                        st.success(f"**{ui_labels['probe_strong']}** {q['strong_indicator']}")
+                        st.error(f"**{ui_labels['probe_red']}** {q['red_flag']}")
                         
             except Exception as e:
                 st.error(f"❌ Analysis Error / 分析過程出現錯誤: {str(e)}")
