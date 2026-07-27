@@ -4,32 +4,33 @@ import json
 from google import genai
 from google.genai import types
 
-# 頁面標題與配置
+# Page Config
 st.set_page_config(
-    page_title="慧聘 · 智析官 (TalentScout AI - HK)",
+    page_title="慧聘 · 智析官 | TalentScout AI",
     page_icon="🎯",
     layout="wide"
 )
 
-# 系統標題
-st.title("🎯 慧聘 · 智析官 (TalentScout AI) - 戰略總監版")
-st.caption("🚀 **自備 Key・零風險**｜融合 4B 戰略、ASA 理論、冰山模型與高階 STAR 提問")
+# Header
+st.title("🎯 慧聘 · 智析官 (TalentScout AI) - 5.0 雙語全能版")
+st.caption("🚀 **AI-First TA Transformation** | 融合精準科學 (Precision Science)、人才預測與 AI 管治 (AI Governance)")
 
-# Sidebar: 設定 API Key
+# Sidebar: Config & Theories
 with st.sidebar:
-    st.header("⚙️ 系統設定 (BYOK)")
-    api_key = st.text_input("輸入 Gemini API Key", type="password")
-    st.markdown("[👉 點此免費申請 Gemini API Key](https://aistudio.google.com/)")
+    st.header("⚙️ 系統設定 (System Config)")
+    api_key = st.text_input("輸入 Gemini API Key (Enter Key)", type="password")
+    st.markdown("[👉 申請免費 API Key (Get Free Key)](https://aistudio.google.com/)")
     st.divider()
-    st.markdown("### 🧠 內建 TA 戰略分析引擎")
+    
+    st.markdown("### 🧠 內建頂層 TA 戰略 (Embedded TA Strategies)")
     st.markdown("""
-    - **4B 獲取戰略：** Buy (挖角) / Build (培養) / Borrow (合約) / Bridge (轉型)
-    - **ASA 留存預測：** 評估 P-J Fit (人崗) 與 P-O Fit (文化)，預測流失風險。
-    - **科學測評建議：** GMA、工作樣本或結構化面試建議。
-    - **冰山與 ABC：** 深挖內驅力與阿里式分級。
+    - **TA vs. Recruitment:** 長遠人才管道預測 (Pipeline Forecasting)。
+    - **Internal Mobility (內部流動):** 預測跨領域發展潛力，提升留存率。
+    - **Candidate Experience (CX):** 量身定制的溝通與招募培育策略 (Nurturing)。
+    - **AI Governance & Trust:** 偏見風險檢測，確保招聘透明度與合規性。
     """)
     st.divider()
-    st.markdown("🔐 **私隱聲明：** 數據僅存於本地 Session，零上傳，符合 PDPO 指引。")
+    st.markdown("🔐 **私隱聲明 (Privacy Policy):** 數據僅存於本地 Session，零上傳 (Zero Data Retention)，符合香港 PDPO 及企業級 AI 風險管治標準。")
 
 def extract_text_from_pdf(pdf_file):
     pdf_reader = pypdf.PdfReader(pdf_file)
@@ -38,101 +39,84 @@ def extract_text_from_pdf(pdf_file):
         text += page.extract_text() or ""
     return text
 
-# 主介面：上傳與輸入區
+# Main UI: Upload Section
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("📄 1. 輸入職位描述 (JD)")
-    jd_input_type = st.radio("JD 輸入方式", ["直接貼上文字", "上傳 PDF"], key="jd_type", horizontal=True)
+    st.subheader("📄 1. 職位描述 (Job Description)")
+    jd_input_type = st.radio("輸入方式 (Input Method)", ["貼上文字 (Text)", "上傳 PDF (PDF)"], key="jd_type", horizontal=True)
     jd_text = ""
-    if jd_input_type == "直接貼上文字":
-        jd_text = st.text_area("請貼上 JD 內容：", height=200)
+    if jd_input_type == "貼上文字 (Text)":
+        jd_text = st.text_area("請貼上 JD 內容 (Paste JD here)：", height=200)
     else:
-        jd_file = st.file_uploader("上傳 JD PDF", type=["pdf"], key="jd_pdf")
+        jd_file = st.file_uploader("上傳 JD PDF (Upload JD)", type=["pdf"], key="jd_pdf")
         if jd_file:
             jd_text = extract_text_from_pdf(jd_file)
 
 with col2:
-    st.subheader("👤 2. 輸入求職者履歷 (CV)")
-    cv_file = st.file_uploader("上傳求職者 CV (PDF 格式)", type=["pdf"], key="cv_pdf")
+    st.subheader("👤 2. 求職者履歷 (Candidate CV)")
+    cv_file = st.file_uploader("上傳履歷 PDF (Upload CV)", type=["pdf"], key="cv_pdf")
     cv_text = ""
     if cv_file:
         cv_text = extract_text_from_pdf(cv_file)
-        st.success(f"已讀取 CV：{cv_file.name}")
+        st.success(f"✅ 已讀取 CV (CV Loaded)：{cv_file.name}")
 
 st.markdown("---")
 
-# 升級版 JSON Schema (注入 TA 戰略架構)
+# JSON Schema for AI Output
 analysis_schema = {
     "type": "OBJECT",
     "properties": {
-        "overall_score": {"type": "INTEGER", "description": "0-100 的整體匹配分數"},
-        "abc_classification": {"type": "STRING", "description": "A類(堅決拿下) / B類(符合預期) / C類(堅決淘汰)"},
-        "strategy_4b": {
+        "overall_score": {"type": "INTEGER", "description": "0-100 Match Score"},
+        "abc_tier": {"type": "STRING", "description": "A-Tier (堅決拿下) / B-Tier (符合預期) / C-Tier (堅決淘汰)"},
+        "ta_vs_recruitment": {
             "type": "STRING", 
-            "description": "基於 4B 模型給予招聘戰略建議：Buy (直接高薪買斷經驗)、Build (具潛力可內部培養)、Borrow (建議以外包/合約形式合作) 或 Bridge (建議跨崗位轉型)。請說明原因。"
+            "description": "Board-level perspective: Is this a short-term reactive hire (Recruitment) or a long-term strategic asset (Talent Acquisition)? Explain why."
         },
-        "asa_retention_analysis": {
-            "type": "OBJECT",
-            "properties": {
-                "fit_analysis": {"type": "STRING", "description": "Person-Job Fit (人崗匹配) 與 Person-Organization Fit (人企文化匹配) 綜合分析。"},
-                "attrition_risk": {"type": "STRING", "description": "預測該候選人的流失/離職風險 (Attrition Risk) 高低及潛在原因。"}
-            }
-        },
-        "iceberg_analysis": {
-            "type": "OBJECT",
-            "properties": {
-                "surface_skills": {"type": "STRING", "description": "冰山之上 (Skills-based)：具體核心技能與量化業績。"},
-                "deep_potential": {"type": "STRING", "description": "冰山之下：價值觀、內驅力、抗壓力。"}
-            }
-        },
-        "core_strengths": {
-            "type": "ARRAY",
-            "items": {"type": "STRING"}
-        },
-        "red_flags": {
-            "type": "ARRAY",
-            "items": {"type": "STRING"}
-        },
-        "selection_recommendation": {
+        "internal_mobility": {
             "type": "STRING",
-            "description": "建議的下一步科學測評方法 (如：GMA 認知測試、Work Sample 工作樣本測試、Case Study 等) 及其原因。"
+            "description": "Forecasting: Predict the candidate's cross-skilling potential and internal mobility for future roles within the organization."
         },
-        "star_questions": {
+        "candidate_experience_guide": {
+            "type": "STRING",
+            "description": "How should the recruiter nurture this candidate? Provide a strategy to ensure a positive Candidate Experience (CX) to secure offer acceptance."
+        },
+        "ai_governance_and_bias_check": {
+            "type": "STRING",
+            "description": "AI Risk Management: Are there any potential biases (age, gender, background) in how this CV might be traditionally evaluated? Provide a transparency statement for the candidate."
+        },
+        "kpi_star_questions": {
             "type": "ARRAY",
             "items": {
                 "type": "OBJECT",
                 "properties": {
-                    "scenario": {"type": "STRING", "description": "針對的 CV 經歷"},
-                    "question": {"type": "STRING", "description": "STAR 面試題 (必須包含詢問遇到的困難/挫折)"},
-                    "what_to_look_for": {"type": "STRING", "description": "觀察重點 (評估底層態度與邏輯)"}
+                    "kpi_focus": {"type": "STRING", "description": "The specific KPI or core competency being tested."},
+                    "question": {"type": "STRING", "description": "STAR question focusing on past failures/challenges."},
+                    "what_to_look_for": {"type": "STRING", "description": "What underlying attitude or skill to evaluate."}
                 }
             }
         }
     },
-    "required": ["overall_score", "abc_classification", "strategy_4b", "asa_retention_analysis", "iceberg_analysis", "core_strengths", "red_flags", "selection_recommendation", "star_questions"]
+    "required": ["overall_score", "abc_tier", "ta_vs_recruitment", "internal_mobility", "candidate_experience_guide", "ai_governance_and_bias_check", "kpi_star_questions"]
 }
 
-# 分析按鈕
-if st.button("🚀 啟動「TA 戰略總監級」透視分析", type="primary", use_container_width=True):
+# Analyze Button
+if st.button("🚀 啟動 AI 戰略透視 (Run AI Strategic Analysis)", type="primary", use_container_width=True):
     if not api_key:
-        st.error("請在左側 Sidebar 輸入 Gemini API Key！")
+        st.error("⚠️ 請在左側輸入 Gemini API Key (Please enter API Key in sidebar)！")
     elif not jd_text or not cv_text:
-        st.warning("請確保已同時提供 JD 與 CV 內容！")
+        st.warning("⚠️ 請提供 JD 與 CV (Please provide both JD and CV)！")
     else:
-        with st.spinner("AI 正在使用 4B 戰略、ASA 理論與冰山模型進行多維度運算..."):
+        with st.spinner("AI 正在進行企業級人才與風險管治分析 (Running Enterprise-grade TA & Risk Analysis)..."):
             try:
                 client = genai.Client(api_key=api_key)
                 
-                # 注入 TA 戰略大師的 Prompt
+                # Bilingual AI Prompt with Governance & Executive perspective
                 prompt = f"""
-你是一位精通「4B 人才戰略」、「ASA 吸引-選擇-流失理論」、「冰山理論」及「阿里人才邏輯」的跨國企業 TA 總監 (Head of Talent Acquisition)。
-請對以下 JD 與 CV 進行深度戰略分析，並以「香港職場常用之繁體中文（可夾雜專業英文 HR 術語）」輸出。
+You are an elite Head of Talent Acquisition and AI Governance Expert operating in Hong Kong. 
+Analyze the JD and CV using precision science. Focus on Talent Acquisition (long-term pipeline) rather than just Recruitment (short-term fix).
+Incorporate Iceberg Theory, Internal Mobility forecasting, Candidate Experience (CX), and AI Risk Management.
 
-重點指令：
-1. 運用 4B 模型 (Buy/Build/Borrow/Bridge) 建議最適合的聘用戰略。
-2. 運用 ASA 理論，嚴格評估 P-O Fit (企業文化匹配) 及潛在的流失風險 (Attrition Risk)。
-3. 以 Skills-based hiring 視角拆解冰山模型。
-4. 建議最適合此崗位的科學甄選方法 (Selection Methods, 如 GMA, Work Sample)。
+Format your output in a highly professional Bilingual format: Traditional Chinese mixed with relevant English HR/Board-level terminology (e.g., "內部流動性 (Internal Mobility)").
 
 Job Description (JD):
 {jd_text}
@@ -152,65 +136,46 @@ Candidate CV:
                 
                 data = json.loads(response.text)
                 
-                # ================= 視覺化渲染 Dashboard =================
-                st.markdown("## 📊 1. 戰略定位與綜合匹配")
-                colA, colB, colC = st.columns([1, 1, 2])
+                # ================= Dashboard Visualization =================
+                st.markdown("## 📊 1. 戰略定位與綜合匹配 (Strategic Positioning & Match)")
+                colA, colB = st.columns(2)
                 with colA:
-                    st.metric(label="綜合匹配得分", value=f"{data['overall_score']} / 100")
+                    st.metric(label="綜合匹配得分 (Overall Score)", value=f"{data['overall_score']} / 100")
                     st.progress(data['overall_score'] / 100)
                 with colB:
-                    abc_class = data['abc_classification']
-                    if "A類" in abc_class:
-                        st.success(f"🏆 {abc_class}")
-                    elif "B類" in abc_class:
-                        st.info(f"👍 {abc_class}")
+                    tier = data['abc_tier']
+                    if "A" in tier:
+                        st.success(f"🏆 評級 (Tier)：{tier}")
+                    elif "B" in tier:
+                        st.info(f"👍 評級 (Tier)：{tier}")
                     else:
-                        st.error(f"⚠️ {abc_class}")
-                with colC:
-                    st.info(f"🧭 **4B 人才戰略建議：**\n{data['strategy_4b']}")
+                        st.error(f"⚠️ 評級 (Tier)：{tier}")
 
                 st.markdown("---")
-                st.markdown("## 🧬 2. ASA 理論：匹配度與流失風險預測")
-                asa1, asa2 = st.columns(2)
-                with asa1:
-                    st.markdown("**🤝 人崗與文化匹配 (P-J & P-O Fit)：**")
-                    st.write(data['asa_retention_analysis']['fit_analysis'])
-                with asa2:
-                    st.markdown("**🚨 離職/流失風險 (Attrition Risk)：**")
-                    st.write(data['asa_retention_analysis']['attrition_risk'])
+                st.markdown("## 🏢 2. 企業級人才戰略 (Enterprise Talent Strategy)")
+                strat1, strat2 = st.columns(2)
+                with strat1:
+                    st.markdown("**🔍 長遠獲取 vs 短期招聘 (TA vs. Recruitment):**")
+                    st.write(data['ta_vs_recruitment'])
+                with strat2:
+                    st.markdown("**🔄 內部流動與跨領域預測 (Internal Mobility Forecasting):**")
+                    st.write(data['internal_mobility'])
 
                 st.markdown("---")
-                st.markdown("## 🏔️ 3. 冰山模型深度透視 (Skills-based Analysis)")
-                ice1, ice2 = st.columns(2)
-                with ice1:
-                    st.markdown("**🌊 冰山之上 (核心技能與量化業績)：**")
-                    st.write(data['iceberg_analysis']['surface_skills'])
-                with ice2:
-                    st.markdown("**🧊 冰山之下 (潛在內驅力與底層素養)：**")
-                    st.write(data['iceberg_analysis']['deep_potential'])
+                st.markdown("## 🛡️ 3. 候選人體驗與 AI 管治 (CX & AI Governance)")
+                gov1, gov2 = st.columns(2)
+                with gov1:
+                    st.info(f"**🤝 招募培育與溝通策略 (Candidate Nurturing & CX):**\n\n{data['candidate_experience_guide']}")
+                with gov2:
+                    st.warning(f"**⚖️ 偏見風險與透明度審查 (Bias Check & Transparency):**\n\n{data['ai_governance_and_bias_check']}")
 
                 st.markdown("---")
-                st.markdown("## ⚖️ 4. 核心優勢 vs. 潛在風險")
-                adv_col, risk_col = st.columns(2)
-                with adv_col:
-                    st.success("### ✅ 核心優勢 (Results/Impact)")
-                    for s in data['core_strengths']:
-                        st.markdown(f"- {s}")
-                with risk_col:
-                    st.error("### 🚩 潛在風險 (Red Flags)")
-                    for r in data['red_flags']:
-                        st.markdown(f"- {r}")
-
-                st.markdown("---")
-                st.markdown("## 🧪 5. 科學測評建議 (Selection Method)")
-                st.info(f"**建議的下一步測評工具：** {data['selection_recommendation']}")
-
-                st.markdown("## 🎯 6. 高階 STAR 面試攻防題庫")
-                st.caption("💡 *總監心法：不問結論，問過程；問挫折，看底層態度與靈活性。*")
-                for idx, q in enumerate(data['star_questions'], 1):
-                    with st.expander(f"📌 題目 {idx}：針對【{q['scenario']}】"):
-                        st.markdown(f"**🗣️ 靈魂拷問：** {q['question']}")
-                        st.markdown(f"**👁️ 考官觀察重點：** {q['what_to_look_for']}")
+                st.markdown("## 🎯 4. KPI 導向 STAR 面試攻防 (KPI-Driven STAR Interview)")
+                st.caption("💡 *Focus: Deep-dive into past challenges to evaluate core competencies.*")
+                for idx, q in enumerate(data['kpi_star_questions'], 1):
+                    with st.expander(f"📌 題目 {idx} | 核心指標 (KPI Focus)：{q['kpi_focus']}"):
+                        st.markdown(f"**🗣️ 靈魂拷問 (Question)：** {q['question']}")
+                        st.markdown(f"**👁️ 考官觀察重點 (What to look for)：** {q['what_to_look_for']}")
                         
             except Exception as e:
-                st.error(f"分析過程出現錯誤：{str(e)}")
+                st.error(f"❌ 分析過程出現錯誤 (Error during analysis)：{str(e)}")
