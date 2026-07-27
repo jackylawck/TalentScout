@@ -14,14 +14,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# 初始化 Session State (用於限制免費 Key 使用次數)
+# 初始化 Session State (用於記錄公共試用額度使用次數)
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 
 # 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
-# 語言選擇
+# 語言選擇 (Sidebar 最頂層)
 with st.sidebar:
     output_lang = st.selectbox(
         "🌐 界面與報告語言 (UI & Output Language):",
@@ -32,13 +32,14 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典
+# UI 文字字典 (包含開源共享、公德心與公平使用聲明)
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
-    "default_key": "使用系統預設免費 Key" if is_zh else "Use System Default Free Key",
-    "byok_key": "使用自備 AI API Key" if is_zh else "Use Custom AI API Key",
-    "loaded_default": "✅ 已載入系統預設免費 Key" if is_zh else "✅ Loaded system default key",
+    "default_key": "使用開源公共免費額度" if is_zh else "Use Open-Source Public Quota",
+    "byok_key": "使用自備 AI API Key (無限制)" if is_zh else "Use Custom API Key (Unlimited)",
+    "loaded_default": "🌱 **本系統為免費開源專案**，已預載公共試用資源（每 Session 10 次）。歡迎自由體驗！若需高頻批量篩選，歡迎切換為自備 Key，將公共資源留給其他有需要的人。" if is_zh else "🌱 **Open-Source Public Quota Loaded** (10 free uses per session). For high-frequency queries, please enter your own API key to support fair resource sharing.",
+    "quota_exceeded": "🤝 **感謝體驗 TalentScout AI！**\n\n本系統為完全免費開源專案，伺服器資源由創作者個人自費分享給全網使用。希望大家發揮公德心，公平使用資源。\n\n本 Session 的公共試用額度（10 次）已暫時達上限。你可以**刷新網頁（F5）重新開啟新 Session**，或於左側選單切換至**『使用自備 AI API Key』**即可享用無限制且更高速的專屬體驗！" if is_zh else "🤝 **Thank you for using TalentScout AI!**\n\nThis is a free open-source project with public server resources funded individually for the community. To promote fair use, the public trial quota (10 uses/session) has been reached.\n\nYou can **refresh the page (F5)** to start a new session, or switch to **'Use Custom API Key'** in the sidebar for unlimited high-speed analysis!",
     "select_provider": "選擇 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     
@@ -72,7 +73,7 @@ ui_labels = {
     "run_btn": "🚀 啟動高階人才科學與深度合規審查 (Run Audit)" if is_zh else "🚀 Run High-Level Talent Audit",
     "spinner_msg": "🚀 智析演算中：正在建立履歷證據鏈、拆解分數與進行風險反證..." if is_zh else "🚀 Analyzing: Building Evidence Table, Score Breakdown & Risk Flags...",
 
-    # Dashboard 靜態標籤
+    # Dashboard 靜態標籤 (雙語適配)
     "sec1_title": "📊 1. 決策總結 (Fit Summary)" if is_zh else "📊 1. Fit Summary",
     "m_score": "綜合得分" if is_zh else "Overall Score",
     "m_conf": "信心級別" if is_zh else "Confidence Level",
@@ -83,6 +84,7 @@ ui_labels = {
     "evidence_source": "證據來源" if is_zh else "Evidence Source",
 
     "sec2_title": "📜 2. 履歷可追溯證據與反證 (Evidence & Counter-Evidence)" if is_zh else "📜 2. Traceable Evidence & Counter-Evidence",
+    "empty_evidence": "暫無足夠證據可供顯示。" if is_zh else "No sufficient evidence available.",
     "sec3_title": "🛡️ 3. 風險分層與 AI 管治控制 (Risk Flags & AI Governance)" if is_zh else "🛡️ 3. Risk Flags & AI Governance Controls",
     "hard_risks": "🚨 硬性風險 (Hard Risks - 必須查核):" if is_zh else "🚨 Hard Risks (Requires Immediate Verification):",
     "soft_risks": "⚠️ 軟性風險 (Soft Risks - 面試觀察):" if is_zh else "⚠️ Soft Risks (Interview Observation Points):",
@@ -98,6 +100,7 @@ ui_labels = {
     "probe_red": "🚩 危險警號 (Red Flag):" if is_zh else "🚩 Red Flag Pattern:"
 }
 
+# Sidebar 配置
 with st.sidebar:
     st.header(ui_labels["sys_config"])
     if default_token:
@@ -108,7 +111,7 @@ with st.sidebar:
     if key_mode == ui_labels["default_key"]:
         provider = "GitHub Models"
         api_key = default_token
-        st.success(ui_labels["loaded_default"])
+        st.info(ui_labels["loaded_default"])
     else:
         provider = st.selectbox(ui_labels["select_provider"], ["OpenAI", "DeepSeek", "Google Gemini", "Groq", "GitHub Models"])
         api_key = st.text_input(ui_labels["enter_key"].format(provider), type="password")
@@ -117,6 +120,7 @@ with st.sidebar:
     st.markdown(ui_labels["framework_title"])
     st.markdown(ui_labels["framework_body"])
 
+# 多格式文本提取函數
 def extract_text_from_files(uploaded_files):
     if not uploaded_files: return ""
     if not isinstance(uploaded_files, list): uploaded_files = [uploaded_files]
@@ -136,9 +140,11 @@ def extract_text_from_files(uploaded_files):
             pass
     return combined_text
 
+# Header
 st.title(ui_labels["title"])
 st.caption(ui_labels["subtitle"])
 
+# 主畫面 Input 欄位
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     st.subheader(ui_labels["col1_title"])
@@ -160,6 +166,7 @@ with col3:
 
 st.markdown("---")
 
+# AI 呼叫封裝（支援原生 JSON Mode）
 def run_ai_analysis(provider, api_key, prompt):
     if provider == "Google Gemini":
         client = genai.Client(api_key=api_key)
@@ -167,7 +174,7 @@ def run_ai_analysis(provider, api_key, prompt):
             model='gemini-2.5-flash', 
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_mime_type="application/json", # 強制 Gemini JSON Mode
+                response_mime_type="application/json",
                 temperature=0.2
             )
         )
@@ -180,27 +187,28 @@ def run_ai_analysis(provider, api_key, prompt):
             model=models[provider],
             messages=[{"role": "system", "content": "You are a Senior HR Analyst and AI Governance Expert outputting raw JSON only."}, {"role": "user", "content": prompt}],
             temperature=0.2,
-            response_format={"type": "json_object"} # 強制 OpenAI-compatible JSON Mode
+            response_format={"type": "json_object"}
         )
         return response.choices[0].message.content.strip()
 
+# 啟動按鈕邏輯
 if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
-    # 防禦 1: 免費 Key 濫用限制 (Rate Limiting)
+    # 防禦 1: 公共試用額度提示與引導 (滿 10 次後提醒)
     if key_mode == ui_labels["default_key"]:
-        if st.session_state.usage_count >= 5:
-            st.error("⚠️ 系統預設免費額度已達上限（每 Session 5 次），請輸入自備 API Key 繼續使用。" if is_zh else "⚠️ Default free quota exceeded (5 uses per session). Please provide your own API Key.")
+        if st.session_state.usage_count >= 10:
+            st.info(ui_labels["quota_exceeded"])
             st.stop()
         st.session_state.usage_count += 1
 
     if not api_key or not jd_text.strip() or not cv_text.strip():
         st.warning("⚠️ 系統需要完整的 API Key, JD 與 CV 才能啟動。" if is_zh else "⚠️ API Key, JD, and CV are required.")
     else:
-        # 防禦 2: Token / 檔案大小極限檢查
-        MAX_CHARS = 80000 # 約 15k-20k tokens
+        # 防禦 2: Token 防爆 Smart Truncation
+        MAX_CHARS = 80000 
         if len(jd_text) + len(cv_text) > MAX_CHARS:
             st.warning("⚠️ 上傳的文件內容過長，系統已自動截斷尾部以保護 API 穩定性與防爆 Token。" if is_zh else "⚠️ Content too long. System truncated the tail to prevent API failure.")
-            jd_text = jd_text[:MAX_CHARS//2]
-            cv_text = cv_text[:MAX_CHARS//2]
+            jd_text = jd_text[:MAX_CHARS//2] + "\n\n...[JD Content Truncated System Warning]"
+            cv_text = cv_text[:MAX_CHARS//2] + "\n\n...[CV Content Truncated System Warning]"
 
         with st.spinner(ui_labels["spinner_msg"]):
             try:
@@ -271,7 +279,7 @@ Candidate CV:
 """
                 raw_response = run_ai_analysis(provider, api_key, prompt)
                 
-                # 防禦 3: JSON 解析修復機制
+                # 防禦 3: Robust JSON Parsing
                 json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
                 clean_json = json_match.group(0) if json_match else raw_response.strip()
                 
@@ -281,12 +289,12 @@ Candidate CV:
                     st.error("❌ AI 回傳資料格式異常，請重新點擊分析按鈕。" if is_zh else "❌ Invalid JSON format from AI, please retry.")
                     st.stop()
 
-                # 防禦 4: Schema 驗證層 (使用 .get() 確保不因 AI 漏字位而 Crash)
+                # 防禦 4: Safe Schema Access (.get())
                 fit_summary = data.get('fit_summary', {})
                 final_guidance = data.get('final_guidance', {})
                 risk_flags = data.get('risk_flags', {})
                 
-                # Dashboard Visualization 
+                # Dashboard 渲染
                 st.markdown(f"## {ui_labels['sec1_title']}")
                 c1, c2, c3, c4 = st.columns(4)
                 c1.metric(ui_labels["m_score"], f"{fit_summary.get('overall_score', 'N/A')} / 100")
@@ -309,7 +317,11 @@ Candidate CV:
                 
                 st.markdown("---")
                 st.markdown(f"## {ui_labels['sec2_title']}")
-                st.table(data.get('evidence_table', []))
+                evidence_data = data.get('evidence_table', [])
+                if evidence_data:
+                    st.table(evidence_data)
+                else:
+                    st.info(ui_labels["empty_evidence"])
                 
                 st.markdown("---")
                 st.markdown(f"## {ui_labels['sec3_title']}")
@@ -332,6 +344,7 @@ Candidate CV:
                         st.success(f"**{ui_labels['probe_strong']}** {q.get('strong_indicator', '')}")
                         st.error(f"**{ui_labels['probe_red']}** {q.get('red_flag', '')}")
                         
-            # 防禦 5: 異常錯誤擷取與 API Key 隱蔽
             except Exception as e:
+                # 伺服器端 Debug 日誌 (隱蔽 Key)
+                print(f"[DEBUG - API Error] {type(e).__name__}: {str(e)}") 
                 st.error(f"❌ Analysis Error / 分析過程出現錯誤: {type(e).__name__} - 系統異常或連線超時，請檢查網路連線與 Key 權限。" if is_zh else f"❌ Analysis Error: {type(e).__name__}. Please check your connection and API key.")
