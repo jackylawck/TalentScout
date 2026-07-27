@@ -28,7 +28,7 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典 (已移除 AIGP 字眼，全面通用化為 AI Governance)
+# UI 文字字典 (全面通用化為 AI Governance)
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
