@@ -70,3 +70,10 @@ pip install -r requirements.txt
 
 # 3. 啟動 Streamlit 本地伺服器
 streamlit run app.py
+
+---
+
+## 📄 授權條款 (License)
+本项目採用 MIT License 授權。
+
+Developed with a strong focus on AI Governance, HR Science, and Privacy-by-Design.
