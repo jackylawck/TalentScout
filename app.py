@@ -65,28 +65,39 @@ with st.sidebar:
     st.divider()
     st.markdown("🔐 **數據管治聲明：** 本地 Session 運作，零數據留存。符合 PDPO 及歐盟 AI 法案 (EU AI Act) 高風險系統合規指引。")
 
-# 通用文件文字提取函數 (支援 PDF、DOCX、DOC)
-def extract_text_from_file(uploaded_file):
-    if uploaded_file is None:
+# 強健的文件文字提取函數 (支援多檔案處理與防錯)
+def extract_text_from_files(uploaded_files):
+    if not uploaded_files:
         return ""
     
-    file_type = uploaded_file.name.split('.')[-1].lower()
-    text = ""
-    
-    try:
-        if file_type == "pdf":
-            pdf_reader = pypdf.PdfReader(uploaded_file)
-            for page in pdf_reader.pages:
-                text += (page.extract_text() or "") + "\n"
-        elif file_type in ["docx", "doc"]:
-            # 解析 Word 檔案 (.docx / .doc)
-            doc = docx.Document(uploaded_file)
-            for para in doc.paragraphs:
-                text += para.text + "\n"
-    except Exception as e:
-        st.error(f"⚠️ 解析檔案 {uploaded_file.name} 時出錯，請嘗試將其另存為標準 .pdf 或 .docx 格式。(錯誤訊息: {str(e)})")
+    # 如果使用者傳入單一檔案，自動包裝成 list 處理
+    if not isinstance(uploaded_files, list):
+        uploaded_files = [uploaded_files]
         
-    return text
+    combined_text = ""
+    
+    for file in uploaded_files:
+        file_type = file.name.split('.')[-1].lower()
+        file_text = ""
+        try:
+            if file_type == "pdf":
+                pdf_reader = pypdf.PdfReader(file)
+                for page in pdf_reader.pages:
+                    file_text += (page.extract_text() or "") + "\n"
+            elif file_type in ["docx", "doc"]:
+                # python-docx 解析 Word
+                doc = docx.Document(file)
+                for para in doc.paragraphs:
+                    file_text += para.text + "\n"
+            
+            if file_text.strip():
+                combined_text += f"\n--- [檔案來源: {file.name}] ---\n" + file_text
+            else:
+                st.warning(f"⚠️ 檔案 `{file.name}` 未能讀取到文字（可能為掃描檔圖片或舊式 `.doc` 二進位格式），建議在 Word 開啟後「另存新檔」為 `.docx` 或 `.pdf`。")
+        except Exception as e:
+            st.error(f"❌ 解析檔案 `{file.name}` 失敗！舊版 Word 97-2003 (`.doc`) 常有加密或非標準格式問題，**請將該檔案用 Word 開啟並「另存新檔」為 `.docx` 或 `.pdf` 後重新上傳。**")
+            
+    return combined_text
 
 # Header
 st.title("🎯 慧聘 · 智析官 (TalentScout AI)")
@@ -97,28 +108,41 @@ col1, col2, col3 = st.columns([1, 1, 1])
 
 with col1:
     st.subheader("📄 1. 職位描述 (JD)")
-    jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳文件"], key="jd_type", horizontal=True)
+    st.caption("📦 *支援多檔案上傳｜單檔大小上限：200 MB*")
+    jd_input_type = st.radio("輸入方式", ["貼上文字", "上傳文件 (可多選)"], key="jd_type", horizontal=True)
     jd_text = ""
     if jd_input_type == "貼上文字":
         jd_text = st.text_area("請貼上 JD 內容：", height=200, placeholder="包含職責、必備條件等...")
     else:
-        jd_file = st.file_uploader("上傳 JD (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], key="jd_file")
-        if jd_file:
-            jd_text = extract_text_from_file(jd_file)
+        jd_files = st.file_uploader(
+            "上傳 JD 檔案 (PDF, DOCX, DOC)", 
+            type=["pdf", "docx", "doc"], 
+            accept_multiple_files=True, 
+            key="jd_files"
+        )
+        if jd_files:
+            jd_text = extract_text_from_files(jd_files)
             if jd_text:
-                st.success(f"✅ 已讀取 JD：{jd_file.name}")
+                st.success(f"✅ 已順利讀取 {len(jd_files)} 個 JD 檔案內容")
 
 with col2:
     st.subheader("👤 2. 求職者履歷 (CV)")
-    cv_file = st.file_uploader("上傳履歷 (PDF, DOCX, DOC)", type=["pdf", "docx", "doc"], key="cv_file")
+    st.caption("📦 *支援多檔案上傳｜單檔大小上限：200 MB*")
+    cv_files = st.file_uploader(
+        "上傳 CV 檔案 (PDF, DOCX, DOC)", 
+        type=["pdf", "docx", "doc"], 
+        accept_multiple_files=True, 
+        key="cv_files"
+    )
     cv_text = ""
-    if cv_file:
-        cv_text = extract_text_from_file(cv_file)
+    if cv_files:
+        cv_text = extract_text_from_files(cv_files)
         if cv_text:
-            st.success(f"✅ 已讀取 CV：{cv_file.name}")
+            st.success(f"✅ 已順利讀取 {len(cv_files)} 個 CV 檔案內容")
 
 with col3:
     st.subheader("🎯 3. 特殊要求 (Preferences)")
+    st.caption("💡 *補充說明與團隊特定要求*")
     special_reqs = st.text_area(
         "輸入額外篩選條件（可留空）：", 
         height=200, 
@@ -165,8 +189,8 @@ def run_ai_analysis(provider, api_key, prompt):
 if st.button("🚀 啟動高階人才科學與合規審查 (Run Audit & Analysis)", type="primary", use_container_width=True):
     if not api_key:
         st.error(f"⚠️ 請在左側 Sidebar 輸入你的 {provider} API Key / Token！")
-    elif not jd_text or not cv_text:
-        st.warning("⚠️ 請同時提供 JD 與 CV 內容！")
+    elif not jd_text.strip() or not cv_text.strip():
+        st.warning("⚠️ 請同時提供有效的 JD 與 CV 內容（如上傳 `.doc` 報錯，請另存為 `.docx` 後重新上傳）！")
     else:
         with st.spinner(f"AI 正在結合 ISO 42001 標準與 {provider} 引擎進行深度演算..."):
             try:
