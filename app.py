@@ -34,7 +34,7 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典 (徹底消除中英夾雜，達到 100% 語言隔離)
+# UI 文字字典
 ui_labels = {
     "sys_config": "⚙️ 系統設定" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
@@ -52,20 +52,20 @@ ui_labels = {
     - **私隱合規:** 嚴格遵循香港 PDPO 數據私隱條例。
 
     **🎯 深度招募與 ATS 特色:**
+    - **多 CV 批量上傳:** 支援一次上傳多份求職者履歷進行綜合比對。
     - **量化勝任力模型:** 動態對齊 JD 核心職能並量化打分。
     - **ATS 關鍵字比對:** 精準擷取 Match & Missing Keywords。
     - **DEI 防偏誤機制:** 強制排除年齡、性別、背景等無意識偏見。
-    - **結構化面試量表:** 內建 1-3-5 分量化評分標準。
     """ if is_zh else """
     **🔐 Enterprise Privacy Guarantee:**
     - **Zero Data Retention:** Processed in-memory; wiped upon refresh.
     - **PDPO Compliant:** Built under Hong Kong PDPO guidelines.
 
     **🎯 Advanced HR Tech Features:**
+    - **Multi-CV Support:** Process multiple candidate resumes concurrently.
     - **Competency Modeling:** Dynamic scoring against JD requirements.
     - **ATS Keyword Matching:** Exact matched and missing keyword extraction.
     - **DEI Safeguards:** Active mitigation of unconscious bias.
-    - **Structured Rubrics:** 1-3-5 quantitative scoring guides for interviews.
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
     "subtitle": "🚀 **企業級 ATS 智慧初篩、勝任力評估與多元包容 (DEI) 管治系統**" if is_zh else "🚀 **Enterprise ATS Screening, Competency Assessment & DEI Governance System**",
@@ -77,9 +77,9 @@ ui_labels = {
     "jd_ph": "請貼上 JD 內容，包含職責與資格等..." if is_zh else "Paste JD content here including duties, requirements...",
     "upload_jd_lbl": "上傳 JD 檔案 (PDF, DOCX, DOC)" if is_zh else "Upload JD Files (PDF, DOCX, DOC)",
 
-    # 欄位二標籤
-    "col2_title": "👤 2. 求職者履歷 (CV)" if is_zh else "👤 2. Candidate Resume (CV)",
-    "upload_cv_lbl": "上傳 CV 檔案 (PDF, DOCX, DOC)" if is_zh else "Upload CV Files (PDF, DOCX, DOC)",
+    # 欄位二標籤 (多檔案支援)
+    "col2_title": "👤 2. 求職者履歷 (CV)" if is_zh else "👤 2. Candidate Resumes (CV)",
+    "upload_cv_lbl": "上傳 CV 檔案 (可多選，PDF, DOCX, DOC)" if is_zh else "Upload CV Files (Multiple files allowed)",
 
     # 欄位三標籤
     "col3_title": "🎯 3. 招聘情境與 ATS 參數" if is_zh else "🎯 3. Hiring Context & ATS Parameters",
@@ -174,6 +174,7 @@ with col1:
 
 with col2:
     st.subheader(ui_labels["col2_title"])
+    # 💡 修正亮點：加入 accept_multiple_files=True 允許上傳多份 CV
     cv_files = st.file_uploader(ui_labels["upload_cv_lbl"], type=["pdf", "docx", "doc"], accept_multiple_files=True, key="cv_uploader")
     cv_text = extract_text_from_files(cv_files)
 
