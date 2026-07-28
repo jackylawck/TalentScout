@@ -14,9 +14,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# 初始化 Session State (用於記錄公共試用額度使用次數)
+# 初始化 Session State
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
+if 'last_analysis' not in st.session_state:
+    st.session_state.last_analysis = None
 
 # 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
@@ -32,14 +34,14 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典 (包含開源共享、公德心與公平使用聲明)
+# UI 文字字典
 ui_labels = {
     "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
     "default_key": "使用開源公共免費額度" if is_zh else "Use Open-Source Public Quota",
     "byok_key": "使用自備 AI API Key (無限制)" if is_zh else "Use Custom API Key (Unlimited)",
     "loaded_default": "🌱 **本系統為免費開源專案**，已預載公共試用資源（每 Session 10 次）。歡迎自由體驗！若需高頻批量篩選，歡迎切換為自備 Key，將公共資源留給其他有需要的人。" if is_zh else "🌱 **Open-Source Public Quota Loaded** (10 free uses per session). For high-frequency queries, please enter your own API key to support fair resource sharing.",
-    "quota_exceeded": "🤝 **感謝體驗 TalentScout AI！**\n\n本系統為完全免費開源專案，伺服器資源由創作者個人自費分享給全網使用。希望大家發揮公德心，公平使用資源。\n\n本 Session 的公共試用額度（10 次）已暫時達上限。你可以**刷新網頁（F5）重新開啟新 Session**，或於左側選單切換至**『使用自備 AI API Key』**即可享用無限制且更高速的專屬體驗！" if is_zh else "🤝 **Thank you for using TalentScout AI!**\n\nThis is a free open-source project with public server resources funded individually for the community. To promote fair use, the public trial quota (10 uses/session) has been reached.\n\nYou can **refresh the page (F5)** to start a new session, or switch to **'Use Custom API Key'** in the sidebar for unlimited high-speed analysis!",
+    "quota_exceeded": "🤝 **感謝體驗 TalentScout AI！**\n\n本 Session 的公共試用額度（10 次）已暫時達上限。請**刷新網頁（F5）**或於左側切換至**『使用自備 Key』**繼續使用！" if is_zh else "🤝 **Quota Reached!** Please refresh page or switch to 'Custom Key' to continue.",
     "select_provider": "選擇 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     
@@ -53,7 +55,7 @@ ui_labels = {
     **🎯 深度招募特色 (Key Features):**
     - **履歷原文追溯:** 提供原段落引用與「反證驗證」，杜絕 AI 幻覺。
     - **硬/軟風險分層:** 區分簽證/語言等「硬死線」與「面試觀察點」。
-    - **防呆與穩定機制:** 內建 JSON Schema 驗證與自動除錯機制。
+    - **Human-in-the-Loop:** 支援 HR 輸入真人觀察補充，進行動態二次校正。
     """ if is_zh else """
     **🔐 Enterprise Privacy Guarantee:**
     - **Zero Data Retention:** Processed strictly in-memory per session; wiped upon refresh.
@@ -63,7 +65,7 @@ ui_labels = {
     **🎯 Core Platform Features:**
     - **Traceable Evidence:** Every claim is backed by exact CV quotes and counter-evidence.
     - **Risk Stratification:** Isolates hard blockers (visa/language) from soft observation points.
-    - **Robust Engineering:** Built-in JSON Schema validation and fallback mechanisms.
+    - **Human-in-the-Loop:** Supports HR feedback for dynamic secondary re-evaluation.
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
     "subtitle": "🚀 **企業級高階人才決策與 AI 管治合規評估系統**" if is_zh else "🚀 **Enterprise Talent Advisory & AI Governance Audit System**",
@@ -73,7 +75,7 @@ ui_labels = {
     "run_btn": "🚀 啟動高階人才科學與深度合規審查 (Run Audit)" if is_zh else "🚀 Run High-Level Talent Audit",
     "spinner_msg": "🚀 智析演算中：正在建立履歷證據鏈、拆解分數與進行風險反證..." if is_zh else "🚀 Analyzing: Building Evidence Table, Score Breakdown & Risk Flags...",
 
-    # Dashboard 靜態標籤 (雙語適配)
+    # Dashboard 靜態標籤
     "sec1_title": "📊 1. 決策總結 (Fit Summary)" if is_zh else "📊 1. Fit Summary",
     "m_score": "綜合得分" if is_zh else "Overall Score",
     "m_conf": "信心級別" if is_zh else "Confidence Level",
@@ -97,10 +99,14 @@ ui_labels = {
     "probe_purpose": "🎯 測試目的:" if is_zh else "🎯 Testing Purpose:",
     "probe_q": "🗣️ 面試提問:" if is_zh else "🗣️ Behavioral Question:",
     "probe_strong": "✅ 優秀指標 (Strong):" if is_zh else "✅ Strong Indicator:",
-    "probe_red": "🚩 危險警號 (Red Flag):" if is_zh else "🚩 Red Flag Pattern:"
+    "probe_red": "🚩 危險警號 (Red Flag):" if is_zh else "🚩 Red Flag Pattern:",
+
+    # Feedback 專屬標籤
+    "sec5_title": "✏️ 5. HR 人類監督反饋與動態校正 (Human-in-the-Loop Feedback)" if is_zh else "✏️ 5. Human-in-the-Loop Feedback & Re-eval",
+    "feedback_ph": "請輸入你的真人觀察或補充資訊（例如：『求職者在電話初篩中確認廣東話流利，且可於 1 個月內完成簽證轉移』）..." if is_zh else "Enter HR notes/screening updates (e.g., 'Candidate confirmed Cantonese fluency and 1-month visa transfer')...",
+    "re_eval_btn": "🔄 結合 HR 反饋重新校正報告 (Update Analysis with HR Notes)" if is_zh else "🔄 Re-evaluate Audit with HR Notes"
 }
 
-# Sidebar 配置
 with st.sidebar:
     st.header(ui_labels["sys_config"])
     if default_token:
@@ -120,7 +126,6 @@ with st.sidebar:
     st.markdown(ui_labels["framework_title"])
     st.markdown(ui_labels["framework_body"])
 
-# 多格式文本提取函數
 def extract_text_from_files(uploaded_files):
     if not uploaded_files: return ""
     if not isinstance(uploaded_files, list): uploaded_files = [uploaded_files]
@@ -140,11 +145,9 @@ def extract_text_from_files(uploaded_files):
             pass
     return combined_text
 
-# Header
 st.title(ui_labels["title"])
 st.caption(ui_labels["subtitle"])
 
-# 主畫面 Input 欄位
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     st.subheader(ui_labels["col1_title"])
@@ -166,7 +169,6 @@ with col3:
 
 st.markdown("---")
 
-# AI 呼叫封裝（支援原生 JSON Mode）
 def run_ai_analysis(provider, api_key, prompt):
     if provider == "Google Gemini":
         client = genai.Client(api_key=api_key)
@@ -191,9 +193,8 @@ def run_ai_analysis(provider, api_key, prompt):
         )
         return response.choices[0].message.content.strip()
 
-# 啟動按鈕邏輯
-if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
-    # 防禦 1: 公共試用額度提示與引導 (滿 10 次後提醒)
+# 通用執行評估函數
+def execute_eval(hr_feedback=""):
     if key_mode == ui_labels["default_key"]:
         if st.session_state.usage_count >= 10:
             st.info(ui_labels["quota_exceeded"])
@@ -202,26 +203,31 @@ if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
 
     if not api_key or not jd_text.strip() or not cv_text.strip():
         st.warning("⚠️ 系統需要完整的 API Key, JD 與 CV 才能啟動。" if is_zh else "⚠️ API Key, JD, and CV are required.")
-    else:
-        # 防禦 2: Token 防爆 Smart Truncation
-        MAX_CHARS = 80000 
-        if len(jd_text) + len(cv_text) > MAX_CHARS:
-            st.warning("⚠️ 上傳的文件內容過長，系統已自動截斷尾部以保護 API 穩定性與防爆 Token。" if is_zh else "⚠️ Content too long. System truncated the tail to prevent API failure.")
-            jd_text = jd_text[:MAX_CHARS//2] + "\n\n...[JD Content Truncated System Warning]"
-            cv_text = cv_text[:MAX_CHARS//2] + "\n\n...[CV Content Truncated System Warning]"
+        return None
 
-        with st.spinner(ui_labels["spinner_msg"]):
-            try:
-                lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis and JSON values strictly in Professional Executive English. Do not use any Chinese characters in any fields."
-                
-                prompt = f"""
-You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 guidelines. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, and stated preferences. Use evidence-based reasoning. Do not infer facts not supported by materials.
+    MAX_CHARS = 80000 
+    curr_jd = jd_text
+    curr_cv = cv_text
+    if len(curr_jd) + len(curr_cv) > MAX_CHARS:
+        st.warning("⚠️ 上傳的文件內容過長，系統已自動截斷尾部。" if is_zh else "⚠️ Content truncated to prevent token limit.")
+        curr_jd = curr_jd[:MAX_CHARS//2] + "\n\n...[JD Truncated]"
+        curr_cv = curr_cv[:MAX_CHARS//2] + "\n\n...[CV Truncated]"
+
+    with st.spinner(ui_labels["spinner_msg"]):
+        try:
+            lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis and JSON values strictly in Professional Executive English. Do not use any Chinese characters in any fields."
+            
+            feedback_prompt = f"\n\n### HR Human Reviewer Supplemental Notes / Feedback:\n{hr_feedback}\n(Please update risk flags, score breakdown, and final recommendations taking this HR feedback into account.)" if hr_feedback.strip() else ""
+
+            prompt = f"""
+You are a senior HR analyst and talent acquisition advisor operating under strict ISO 42001 guidelines. Your task is to assess the candidate's fit based STRICTLY on the job description, CV, stated preferences, and any supplemental HR feedback provided. Use evidence-based reasoning.
 
 Language Requirement:
 {lang_instruction}
 
 Special Requirements:
 {special_reqs if special_reqs.strip() else "None specified."}
+{feedback_prompt}
 
 Format your output STRICTLY in valid JSON matching this exact schema:
 {{
@@ -241,8 +247,8 @@ Format your output STRICTLY in valid JSON matching this exact schema:
   "evidence_table": [
     {{
       "claim": "Statement of finding",
-      "cv_quote": "Exact quote from CV",
-      "source_section": "Section or company name",
+      "cv_quote": "Exact quote from CV or HR notes",
+      "source_section": "Section name or HR Note",
       "confidence": "High / Medium / Low",
       "counter_evidence": "Counter-evidence or limitation"
     }}
@@ -272,79 +278,92 @@ Format your output STRICTLY in valid JSON matching this exact schema:
 Output ONLY raw JSON. Do not include markdown formatting.
 
 Job Description (JD):
-{jd_text}
+{curr_jd}
 
 Candidate CV:
-{cv_text}
+{curr_cv}
 """
-                raw_response = run_ai_analysis(provider, api_key, prompt)
-                
-                # 防禦 3: Robust JSON Parsing
-                json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
-                clean_json = json_match.group(0) if json_match else raw_response.strip()
-                
-                try:
-                    data = json.loads(clean_json)
-                except json.JSONDecodeError:
-                    st.error("❌ AI 回傳資料格式異常，請重新點擊分析按鈕。" if is_zh else "❌ Invalid JSON format from AI, please retry.")
-                    st.stop()
+            raw_response = run_ai_analysis(provider, api_key, prompt)
+            json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
+            clean_json = json_match.group(0) if json_match else raw_response.strip()
+            
+            return json.loads(clean_json)
+        except Exception as e:
+            print(f"[DEBUG - API Error] {type(e).__name__}: {str(e)}") 
+            st.error(f"❌ Analysis Error: {type(e).__name__}. Please check connection and API key.")
+            return None
 
-                # 防禦 4: Safe Schema Access (.get())
-                fit_summary = data.get('fit_summary', {})
-                final_guidance = data.get('final_guidance', {})
-                risk_flags = data.get('risk_flags', {})
-                
-                # Dashboard 渲染
-                st.markdown(f"## {ui_labels['sec1_title']}")
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric(ui_labels["m_score"], f"{fit_summary.get('overall_score', 'N/A')} / 100")
-                c2.metric(ui_labels["m_conf"], fit_summary.get('confidence_level', 'N/A'))
-                c3.metric(ui_labels["m_rec"], fit_summary.get('final_recommendation', 'N/A'))
-                c4.metric(ui_labels["m_next"], final_guidance.get('advance_to_next', 'N/A'))
-                
-                st.info(f"**{ui_labels['verdict_title']}** {fit_summary.get('one_sentence_verdict', 'N/A')}")
-                
-                st.markdown(f"### {ui_labels['score_breakdown_title']}")
-                score_breakdown = data.get('score_breakdown', [])
-                if score_breakdown:
-                    sb_cols = st.columns(len(score_breakdown))
-                    for idx, item in enumerate(score_breakdown):
-                        with sb_cols[idx]:
-                            st.markdown(f"**{item.get('dimension', 'N/A')}**")
-                            st.markdown(f"### {item.get('score', 'N/A')}")
-                            st.caption(f"{item.get('justification', '')}")
-                            st.caption(f"*({ui_labels['evidence_source']}: {item.get('evidence_type', 'N/A')})*")
-                
-                st.markdown("---")
-                st.markdown(f"## {ui_labels['sec2_title']}")
-                evidence_data = data.get('evidence_table', [])
-                if evidence_data:
-                    st.table(evidence_data)
-                else:
-                    st.info(ui_labels["empty_evidence"])
-                
-                st.markdown("---")
-                st.markdown(f"## {ui_labels['sec3_title']}")
-                r1, r2 = st.columns(2)
-                with r1:
-                    st.error(f"**{ui_labels['hard_risks']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('hard_risks', ["None"])]))
-                    st.warning(f"**{ui_labels['soft_risks']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('soft_risks', ["None"])]))
-                with r2:
-                    st.info(f"**{ui_labels['bias_traps']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('bias_traps', ["None"])]))
-                    st.markdown(f"**{ui_labels['missing_info']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('missing_info', ["None"])]))
-                    st.markdown(f"**{ui_labels['must_confirm']}**\n" + "\n".join([f"- {x}" for x in final_guidance.get('must_confirm', ["None"])]))
-                
-                st.markdown("---")
-                st.markdown(f"## {ui_labels['sec4_title']}")
-                st.caption(ui_labels["sec4_sub"])
-                for q in data.get('interview_probes', []):
-                    with st.expander(f"📌 {q.get('competency', 'Competency')}"):
-                        st.markdown(f"**{ui_labels['probe_purpose']}** {q.get('testing_purpose', '')}")
-                        st.markdown(f"**{ui_labels['probe_q']}** {q.get('question', '')}")
-                        st.success(f"**{ui_labels['probe_strong']}** {q.get('strong_indicator', '')}")
-                        st.error(f"**{ui_labels['probe_red']}** {q.get('red_flag', '')}")
-                        
-            except Exception as e:
-                # 伺服器端 Debug 日誌 (隱蔽 Key)
-                print(f"[DEBUG - API Error] {type(e).__name__}: {str(e)}") 
-                st.error(f"❌ Analysis Error / 分析過程出現錯誤: {type(e).__name__} - 系統異常或連線超時，請檢查網路連線與 Key 權限。" if is_zh else f"❌ Analysis Error: {type(e).__name__}. Please check your connection and API key.")
+# 按鈕 1: 初次觸發分析
+if st.button(ui_labels["run_btn"], type="primary", use_container_width=True):
+    st.session_state.last_analysis = execute_eval()
+
+# 渲染分析結果 (若 Session 內有資料)
+if st.session_state.last_analysis:
+    data = st.session_state.last_analysis
+    fit_summary = data.get('fit_summary', {})
+    final_guidance = data.get('final_guidance', {})
+    risk_flags = data.get('risk_flags', {})
+    
+    # Sec 1: 決策總結
+    st.markdown(f"## {ui_labels['sec1_title']}")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric(ui_labels["m_score"], f"{fit_summary.get('overall_score', 'N/A')} / 100")
+    c2.metric(ui_labels["m_conf"], fit_summary.get('confidence_level', 'N/A'))
+    c3.metric(ui_labels["m_rec"], fit_summary.get('final_recommendation', 'N/A'))
+    c4.metric(ui_labels["m_next"], final_guidance.get('advance_to_next', 'N/A'))
+    
+    st.info(f"**{ui_labels['verdict_title']}** {fit_summary.get('one_sentence_verdict', 'N/A')}")
+    
+    st.markdown(f"### {ui_labels['score_breakdown_title']}")
+    score_breakdown = data.get('score_breakdown', [])
+    if score_breakdown:
+        sb_cols = st.columns(len(score_breakdown))
+        for idx, item in enumerate(score_breakdown):
+            with sb_cols[idx]:
+                st.markdown(f"**{item.get('dimension', 'N/A')}**")
+                st.markdown(f"### {item.get('score', 'N/A')}")
+                st.caption(f"{item.get('justification', '')}")
+                st.caption(f"*({ui_labels['evidence_source']}: {item.get('evidence_type', 'N/A')})*")
+    
+    st.markdown("---")
+    # Sec 2: 證據鏈
+    st.markdown(f"## {ui_labels['sec2_title']}")
+    evidence_data = data.get('evidence_table', [])
+    if evidence_data:
+        st.table(evidence_data)
+    else:
+        st.info(ui_labels["empty_evidence"])
+    
+    st.markdown("---")
+    # Sec 3: 風險分層
+    st.markdown(f"## {ui_labels['sec3_title']}")
+    r1, r2 = st.columns(2)
+    with r1:
+        st.error(f"**{ui_labels['hard_risks']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('hard_risks', ["None"])]))
+        st.warning(f"**{ui_labels['soft_risks']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('soft_risks', ["None"])]))
+    with r2:
+        st.info(f"**{ui_labels['bias_traps']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('bias_traps', ["None"])]))
+        st.markdown(f"**{ui_labels['missing_info']}**\n" + "\n".join([f"- {x}" for x in risk_flags.get('missing_info', ["None"])]))
+        st.markdown(f"**{ui_labels['must_confirm']}**\n" + "\n".join([f"- {x}" for x in final_guidance.get('must_confirm', ["None"])]))
+    
+    st.markdown("---")
+    # Sec 4: 面試題庫
+    st.markdown(f"## {ui_labels['sec4_title']}")
+    st.caption(ui_labels["sec4_sub"])
+    for q in data.get('interview_probes', []):
+        with st.expander(f"📌 {q.get('competency', 'Competency')}"):
+            st.markdown(f"**{ui_labels['probe_purpose']}** {q.get('testing_purpose', '')}")
+            st.markdown(f"**{ui_labels['probe_q']}** {q.get('question', '')}")
+            st.success(f"**{ui_labels['probe_strong']}** {q.get('strong_indicator', '')}")
+            st.error(f"**{ui_labels['probe_red']}** {q.get('red_flag', '')}")
+
+    st.markdown("---")
+    # Sec 5: 💡 NEW! HR 反饋與動態二次評估
+    st.markdown(f"## {ui_labels['sec5_title']}")
+    hr_feedback_text = st.text_area("HR Reviewer Notes", placeholder=ui_labels["feedback_ph"], key="hr_feedback_input", label_visibility="collapsed")
+    if st.button(ui_labels["re_eval_btn"], use_container_width=True):
+        if hr_feedback_text.strip():
+            updated_data = execute_eval(hr_feedback=hr_feedback_text)
+            if updated_data:
+                st.session_state.last_analysis = updated_data
+                st.rerun()
