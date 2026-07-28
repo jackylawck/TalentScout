@@ -1,11 +1,11 @@
 # 🎯 慧聘 · 智析官 (TalentScout AI)
-> **Enterprise Talent Advisory & ISO 42001 AI Governance Audit System**  
-> **企業級人才決策與 ISO 42001 人工智能管治合規審計系統**
+> **Enterprise ATS Screening, Competency Assessment & DEI Governance System**  
+> **企業級 ATS 智慧初篩、勝任力評估與多元包容 (DEI) 管治系統**
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://talentscout-open.streamlit.app)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Governance](https://img.shields.io/badge/AI_Governance-ISO_42001-orange)
+![HR Tech](https://img.shields.io/badge/HR_Tech-ATS_%7C_DEI_%7C_ISO_42001-orange)
 
 ---
 
@@ -17,44 +17,45 @@
 ## 📖 專案簡介 (Overview)
 
 ### 🇭🇰 繁體中文
-**慧聘 · 智析官 (TalentScout AI)** 是一個專為高階 HR 負責人、董事局顧問與用人主管（Line Managers）打造的企業級人才評估與 AI 管治合規系統。
+**慧聘 · 智析官 (TalentScout AI)** 是一個專為高階 HR 負責人、招聘主管與企業決策者打造的全方位 ATS 智慧初篩與 AI 管治系統。
 
-不同於傳統僅給出黑盒評分的招募工具，TalentScout AI 結合了**高階人才科學 (Talent Science)**、**香港 PDPO 私隱規範**，以及 **ISO 42001 高風險 AI 系統管理標準**。系統提供可追溯的履歷證據鏈 (Evidence Table)、反證機制 (Counter-Evidence Checks)、硬/軟風險分層，以及具備 Strong Answer 與 Red Flag 辨識力的結構化 STAR 行為面試指南。
+本系統融合了**人才科學 (Talent Science)**、**勝任力模型 (Competency Modeling)**、**DEI (多元、公平與包容) 防偏誤機制**，以及 **ISO 42001 人工智能管治標準**。系統能自動精準比對 ATS 關鍵字、隔離無意識偏見、進行 5 維勝任力量化打分，並自動生成 1-3-5 分制的結構化行為面試評估量表 (Interview Rubric)。
 
 ### 🇬🇧 English
-**TalentScout AI** is an enterprise-grade Talent Advisory and AI Governance Audit platform designed for Senior HR Executives, Managing Directors, and Line Managers.
+**TalentScout AI** is an enterprise-grade ATS screening and AI Governance platform designed for Senior HR Executives, Talent Acquisition Leads, and Hiring Managers.
 
-Unlike conventional recruitment AI that produces black-box scores, TalentScout AI strictly embeds **ISO 42001 Risk Management Principles** and **Hong Kong PDPO Privacy Standards**. It provides transparent evidence traceability, counter-evidence checks, hard vs. soft risk isolation, and role-tailored STAR interview probes featuring Strong and Red Flag response indicators.
+By integrating **Talent Science**, **Competency-Based Modeling**, **DEI (Diversity, Equity & Inclusion) Safeguards**, and **ISO 42001 Governance Standards**, TalentScout AI provides automated ATS keyword matching, active bias mitigation, quantitative competency scoring, and standardized 1-3-5 point structured interview scoring rubrics.
+
+---
+
+## 🌟 核心特色模組 (Key Features)
+
+| 模組 (Module) | 說明 (Traditional Chinese) | Description (English) |
+| :--- | :--- | :--- |
+| **🔍 ATS 關鍵字比對** | 自動提取 JD 核心硬技能，精準分析 CV 之「命中 (Matched)」與「缺失 (Missing)」關鍵字。 | Extracts core hard skills from JDs to pinpoint exact matched and missing CV keywords. |
+| **📈 量化勝任力模型** | 動態對齊職位核心職能（硬實力、解決問題、團隊領導），進行 0-100 分量化評估。 | Evaluates candidates across role-specific competency dimensions with 0-100 scoring. |
+| **⚖️ DEI 防偏誤機制** | 建立主動防護網，強制排除年齡、性別、院校光環等無意識偏見，落實包容性招聘。 | Active safeguards against age, gender, or brand prestige biases to foster inclusive hiring. |
+| **🎯 結構化面試量表** | 基於勝任力生成 STAR 行為面試問題，並提供 1 分 (需關注)、3 分 (合格)、5 分 (優秀) 之明確評判標準。 | Generates STAR behavioral probes paired with clear 1-3-5 point scoring rubrics. |
+| **⏳ 招聘時效與漏斗** | 評估候選人到職準備期 (Time-to-Fill Risk)，並提供明確的招聘漏斗推進建議 (Funnel Action)。 | Assesses readiness and Time-to-Fill risks, recommending explicit funnel next-steps. |
+| **🎖️ 內部推薦加權** | 內建員工推薦 (Internal Referral) 加權邏輯，在維持硬性條件死線的同時優化文化契合度評估。 | Applies referral weighting to optimize cultural fit evaluations without compromising baseline qualifications. |
+| **🤝 人類監督與校正** | 支援 Human-in-the-Loop (HITL) 機制，HR 可輸入電話初篩洞察，驅動 AI 進行二次動態校正。 | Enables HR to input screening feedback for dynamic real-time model re-evaluation. |
 
 ---
 
 ## 🛡️ 數據安全與隱私防護 (Data Privacy & Security)
 
-* **🔐 零數據留存 (Zero Data Retention):** 本系統採用全 Session 記憶體運算，不儲存任何上傳之 CV、JD 或分析數據，瀏覽器頁面重新整理即完全清空。
-* **🔑 BYOK 直連架構 (Bring Your Own Key):** 支援使用者輸入個人 API Key (OpenAI, DeepSeek, Google Gemini, Groq, GitHub Models)，數據直接與官方 API 端點加密通信，不經過任何第三方中轉伺服器。
-* **⚖️ 高風險 AI 管治 (EU AI Act & ISO 42001):** 將招募 AI 定位為「高風險 AI 系統」，落實決策可追溯性 (Traceability) 與人類監督 (Human-in-the-Loop, HITL) 防護網。
-
----
-
-## 🌟 核心特色 (Key Features)
-
-| 核心模組 (Module) | 說明 (Traditional Chinese) | Description (English) |
-| :--- | :--- | :--- |
-| **📊 五維分數拆解** | 拒絕黑盒分數，拆解硬條件、核心能力、行業匹配、風格與風險扣分。 | 5-subscore analytics breaking down Hard Req, Competency, Industry Fit, Culture, & Risk Deductions. |
-| **📜 可追溯證據鏈** | 每項評價皆附帶履歷原文精確引用 (CV Quotes) 與來源段落，符合 ISO 42001 Audit Trail。 | Verbatim CV quotes & source mapping ensuring 100% traceability under ISO 42001. |
-| **🔍 反證與去偏見** | 引入 Counter-Evidence 檢查機制，防範「光環效應」或單一訊號先入為主的偏見。 | Counter-evidence checks to prevent Halo Effect, prestige bias, or premature rejection. |
-| **🚨 硬/軟風險分層** | 隔離簽證 (ASMTP)、語言等「硬死線」，與文化、適應力等「面試觀察點」。 | Separates hard blockers (visa/languages) from soft interview observation points. |
-| **🎯 結構化面試指南** | 根據崗位屬性，自動生成 STAR 面試問題，並標註優秀特徵與危險警號 (Red Flags)。 | Generates targeted STAR probes with clear Strong and Red Flag answer patterns. |
-| **🌐 全中文/全英切換** | 支援 UI 介面與 AI 分析報告一鍵切換純正繁體中文或 Executive 英文版面。 | Seamless one-click dynamic UI & report switching between Traditional Chinese & English. |
+* **🔐 零數據留存 (Zero Data Retention):** 全 Session 記憶體運算，不儲存任何上傳之 CV、JD 或分析數據，頁面重整即完全清空。
+* **🔑 BYOK 直連加密 (Bring Your Own Key):** 支援使用者輸入個人 API Key (OpenAI, DeepSeek, Google Gemini, Groq, GitHub Models)，數據直連官方端點。
+* **⚖️ 私隱條例合規 (HK PDPO Compliant):** 嚴格遵循香港《個人資料（私隱）條例》及國際高風險 AI 管治指引。
 
 ---
 
 ## 🛠️ 技術堆疊 (Tech Stack)
 
-* **Frontend & UI:** [Streamlit](https://streamlit.io/)
+* **Frontend & UI:** [Streamlit](https://streamlit.io/) (100% Dynamic Bilingual UI)
 * **Document Parsing:** `pypdf`, `python-docx` (Supports PDF, DOCX, DOC up to 200MB)
 * **AI Multi-Engine:** OpenAI GPT-4o, DeepSeek-Chat, Google Gemini 2.5 Flash, Groq Llama-3.3, GitHub Models
-* **Governance Framework:** ISO/IEC 42001 (AIMS), EU AI Act High-Risk AI System Guidance, HK PDPO Guidelines
+* **Governance & HR Framework:** ISO/IEC 42001 (AIMS), DEI Recruitment Guidelines, Structured Interview Rubric Methodology
 
 ---
 
