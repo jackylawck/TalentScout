@@ -23,7 +23,7 @@ if 'last_analysis' not in st.session_state:
 # 讀取後台預設 Secrets
 default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
 
-# 語言選擇
+# 語言選擇 (Sidebar 最頂層)
 with st.sidebar:
     output_lang = st.selectbox(
         "🌐 界面與報告語言 (UI & Output Language):",
@@ -34,28 +34,28 @@ with st.sidebar:
 
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 
-# UI 文字字典
+# UI 文字字典 (徹底消除中英夾雜，達到 100% 語言隔離)
 ui_labels = {
-    "sys_config": "⚙️ 系統設定 (System Config)" if is_zh else "⚙️ System Config",
+    "sys_config": "⚙️ 系統設定" if is_zh else "⚙️ System Config",
     "key_mode": "選擇 AI 金鑰模式：" if is_zh else "Select AI Key Mode:",
     "default_key": "使用開源公共免費額度" if is_zh else "Use Open-Source Public Quota",
     "byok_key": "使用自備 AI API Key (無限制)" if is_zh else "Use Custom API Key (Unlimited)",
     "loaded_default": "🌱 **本系統為免費開源專案**，已預載公共試用資源（每 Session 10 次）。歡迎自由體驗！若需高頻批量篩選，歡迎切換為自備 Key，將公共資源留給其他有需要的人。" if is_zh else "🌱 **Open-Source Public Quota Loaded** (10 free uses per session).",
     "quota_exceeded": "🤝 **本 Session 試用額度（10 次）已達上限。** 請刷新網頁（F5）或切換至『使用自備 AI API Key』繼續使用！" if is_zh else "🤝 **Quota Reached!** Please refresh page or switch to 'Custom Key' to continue.",
-    "select_provider": "選擇 AI 供應商 (Provider)：" if is_zh else "Select AI Provider:",
+    "select_provider": "選擇 AI 供應商：" if is_zh else "Select AI Provider:",
     "enter_key": "輸入你的 {} Key" if is_zh else "Enter your {} Key",
     
     "framework_title": "🛡️ 數據安全與進階 HR 管治特色" if is_zh else "🛡️ Privacy & Advanced HR Governance",
     "framework_body": """
-    **🔐 企業級私密防護 (Data Privacy):**
+    **🔐 企業級私密防護:**
     - **零數據留存:** 僅於本地 Session 運算，重整即清空。
     - **私隱合規:** 嚴格遵循香港 PDPO 數據私隱條例。
 
-    **🎯 深度招募與 ATS 特色 (HR Tech Features):**
+    **🎯 深度招募與 ATS 特色:**
     - **量化勝任力模型:** 動態對齊 JD 核心職能並量化打分。
     - **ATS 關鍵字比對:** 精準擷取 Match & Missing Keywords。
     - **DEI 防偏誤機制:** 強制排除年齡、性別、背景等無意識偏見。
-    - **結構化面試量表:** 內建 1-3-5 分量化評分標準 (Scoring Rubric)。
+    - **結構化面試量表:** 內建 1-3-5 分量化評分標準。
     """ if is_zh else """
     **🔐 Enterprise Privacy Guarantee:**
     - **Zero Data Retention:** Processed in-memory; wiped upon refresh.
@@ -69,39 +69,56 @@ ui_labels = {
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)" if is_zh else "🎯 TalentScout AI",
     "subtitle": "🚀 **企業級 ATS 智慧初篩、勝任力評估與多元包容 (DEI) 管治系統**" if is_zh else "🚀 **Enterprise ATS Screening, Competency Assessment & DEI Governance System**",
+    
+    # 欄位一標籤
     "col1_title": "📄 1. 職位描述 (JD)" if is_zh else "📄 1. Job Description (JD)",
+    "input_mode_lbl": "輸入方式" if is_zh else "Input Method",
+    "input_modes": ["貼上文字", "上傳文件"] if is_zh else ["Paste Text", "Upload Files"],
+    "jd_ph": "請貼上 JD 內容，包含職責與資格等..." if is_zh else "Paste JD content here including duties, requirements...",
+    "upload_jd_lbl": "上傳 JD 檔案 (PDF, DOCX, DOC)" if is_zh else "Upload JD Files (PDF, DOCX, DOC)",
+
+    # 欄位二標籤
     "col2_title": "👤 2. 求職者履歷 (CV)" if is_zh else "👤 2. Candidate Resume (CV)",
+    "upload_cv_lbl": "上傳 CV 檔案 (PDF, DOCX, DOC)" if is_zh else "Upload CV Files (PDF, DOCX, DOC)",
+
+    # 欄位三標籤
     "col3_title": "🎯 3. 招聘情境與 ATS 參數" if is_zh else "🎯 3. Hiring Context & ATS Parameters",
-    "run_btn": "🚀 啟動全維度 ATS 解析與結構化評估 (Run ATS Audit)" if is_zh else "🚀 Run Full ATS & Competency Audit",
+    "referral_lbl": "🎖️ 此為內部員工推薦" if is_zh else "🎖️ Internal Referral Candidate",
+    "urgency_lbl": "⏳ 職位招聘急迫性" if is_zh else "⏳ Time-to-Fill Urgency",
+    "urgency_opts": ["標準", "緊急"] if is_zh else ["Standard", "Urgent"],
+    "special_req_lbl": "其他特殊要求" if is_zh else "Special Requirements",
+    "special_req_ph": "例如：必須精通廣東話/英語" if is_zh else "E.g., Fluent Cantonese/English required",
+
+    "run_btn": "🚀 啟動全維度 ATS 解析與結構化評估" if is_zh else "🚀 Run Full ATS & Competency Audit",
     "spinner_msg": "🚀 智析演算中：執行 ATS 關鍵字比對、DEI 審查與勝任力量化..." if is_zh else "🚀 Analyzing: Executing ATS matching, DEI safeguards & Competency scoring...",
 
     # Dashboard 標籤
-    "sec1_title": "📊 1. 漏斗決策與 ATS 匹配度 (Funnel Verdict & ATS Match)" if is_zh else "📊 1. Funnel Verdict & ATS Match",
+    "sec1_title": "📊 1. 漏斗決策與 ATS 匹配度" if is_zh else "📊 1. Funnel Verdict & ATS Match",
     "m_score": "綜合勝任力得分" if is_zh else "Competency Score",
     "m_ats": "ATS 關鍵字匹配率" if is_zh else "ATS Keyword Match",
     "m_rec": "漏斗轉換建議" if is_zh else "Funnel Recommendation",
-    "m_time": "到職時效評估" if is_zh else "Time-to-Fill Risk",
-    "ats_matched": "✅ 命中關鍵字 (Matched):" if is_zh else "✅ Matched Keywords:",
-    "ats_missing": "❌ 缺失關鍵字 (Missing):" if is_zh else "❌ Missing Keywords:",
+    "m_time": "到職時效評估" if is_zh else "Time-to-Fill Assessment",
+    "ats_matched": "✅ 命中關鍵字:" if is_zh else "✅ Matched Keywords:",
+    "ats_missing": "❌ 缺失關鍵字:" if is_zh else "❌ Missing Keywords:",
     
-    "sec2_title": "📈 2. 核心勝任力維度拆解 (Competency Breakdown)" if is_zh else "📈 2. Core Competency Breakdown",
+    "sec2_title": "📈 2. 核心勝任力維度拆解" if is_zh else "📈 2. Core Competency Breakdown",
     "evidence_source": "證據來源" if is_zh else "Evidence Source",
 
-    "sec3_title": "🛡️ 3. DEI 防偏誤審查與風險管治 (DEI Safeguards & Risks)" if is_zh else "🛡️ 3. DEI Safeguards & Risk Governance",
-    "dei_check": "⚖️ DEI 多元包容防偏誤機制 (DEI Bias Prevention):" if is_zh else "⚖️ DEI Bias Prevention Safeguards:",
-    "hard_risks": "🚨 絕對風險/合規死線 (Hard Risks):" if is_zh else "🚨 Hard Risks / Compliance Blocks:",
-    "soft_risks": "⚠️ 軟性風險/面試觀察點 (Soft Risks):" if is_zh else "⚠️ Soft Risks / Interview Focus:",
+    "sec3_title": "🛡️ 3. DEI 防偏誤審查與風險管治" if is_zh else "🛡️ 3. DEI Safeguards & Risk Governance",
+    "dei_check": "⚖️ DEI 多元包容防偏誤機制:" if is_zh else "⚖️ DEI Bias Prevention Safeguards:",
+    "hard_risks": "🚨 絕對風險/合規死線:" if is_zh else "🚨 Hard Risks / Compliance Blocks:",
+    "soft_risks": "⚠️ 軟性風險/面試觀察點:" if is_zh else "⚠️ Soft Risks / Interview Focus:",
 
-    "sec4_title": "🎯 4. 結構化面試量表 (Structured Interview Rubric)" if is_zh else "🎯 4. Structured Interview Rubric",
+    "sec4_title": "🎯 4. 結構化面試量表" if is_zh else "🎯 4. Structured Interview Rubric",
     "sec4_sub": "💡 *基於勝任力模型生成之標準化評分題庫，確保面試官評分一致性。*" if is_zh else "💡 *Standardized scoring rubrics generated based on competency models for consistency.*",
-    "probe_q": "🗣️ 行為面試題 (STAR Question):" if is_zh else "🗣️ STAR Question:",
-    "rubric_5": "🟢 5分 (Excellent):" if is_zh else "🟢 5 points (Excellent):",
-    "rubric_3": "🟡 3分 (Acceptable):" if is_zh else "🟡 3 points (Acceptable):",
-    "rubric_1": "🔴 1分 (Poor):" if is_zh else "🔴 1 point (Poor):",
+    "probe_q": "🗣️ 行為面試題 (STAR):" if is_zh else "🗣️ STAR Question:",
+    "rubric_5": "🟢 5分 (優秀):" if is_zh else "🟢 5 points (Excellent):",
+    "rubric_3": "🟡 3分 (合格):" if is_zh else "🟡 3 points (Acceptable):",
+    "rubric_1": "🔴 1分 (需關注):" if is_zh else "🔴 1 point (Poor):",
 
-    "sec5_title": "🤝 5. HR 漏斗覆核與動態校正 (Human-in-the-Loop Re-eval)" if is_zh else "🤝 5. Human-in-the-Loop Re-eval",
+    "sec5_title": "🤝 5. HR 漏斗覆核與動態校正" if is_zh else "🤝 5. Human-in-the-Loop Re-eval",
     "feedback_ph": "輸入電話初篩結果或補充觀察（例如：『候選人為內部高管推薦，且接受立即上班』）..." if is_zh else "Enter screening notes (e.g., 'Internal referral, available immediately')...",
-    "re_eval_btn": "🔄 結合 HR 反饋重新校正模型 (Update Evaluation)" if is_zh else "🔄 Update Evaluation with HR Notes"
+    "re_eval_btn": "🔄 結合 HR 反饋重新校正模型" if is_zh else "🔄 Update Evaluation with HR Notes"
 }
 
 with st.sidebar:
@@ -148,23 +165,23 @@ st.caption(ui_labels["subtitle"])
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     st.subheader(ui_labels["col1_title"])
-    jd_input_type = st.radio("輸入", ["貼上文字", "上傳文件"] if is_zh else ["Paste Text", "Upload Files"], horizontal=True, key="jd_mode")
+    jd_input_type = st.radio(ui_labels["input_mode_lbl"], ui_labels["input_modes"], horizontal=True, key="jd_mode")
     if jd_input_type in ["貼上文字", "Paste Text"]:
-        jd_text = st.text_area("JD 內容", height=200, label_visibility="collapsed")
+        jd_text = st.text_area("JD 內容", height=200, placeholder=ui_labels["jd_ph"], label_visibility="collapsed")
     else:
-        jd_files = st.file_uploader("上傳 JD (PDF/DOCX)", type=["pdf", "docx", "doc"], accept_multiple_files=True, key="jd_uploader")
+        jd_files = st.file_uploader(ui_labels["upload_jd_lbl"], type=["pdf", "docx", "doc"], accept_multiple_files=True, key="jd_uploader")
         jd_text = extract_text_from_files(jd_files)
 
 with col2:
     st.subheader(ui_labels["col2_title"])
-    cv_files = st.file_uploader("上傳 CV (PDF/DOCX)", type=["pdf", "docx", "doc"], accept_multiple_files=True, key="cv_uploader")
+    cv_files = st.file_uploader(ui_labels["upload_cv_lbl"], type=["pdf", "docx", "doc"], accept_multiple_files=True, key="cv_uploader")
     cv_text = extract_text_from_files(cv_files)
 
 with col3:
     st.subheader(ui_labels["col3_title"])
-    is_referral = st.checkbox("🎖️ 此為內部員工推薦 (Internal Referral)", value=False)
-    urgency = st.selectbox("⏳ 職位招聘急迫性 (Time-to-Fill Urgency)", ["標準 (Standard)", "緊急 (Urgent)"])
-    special_reqs = st.text_area("其他特殊要求 (Special Req)", height=90, placeholder="例如：必須精通廣東話" if is_zh else "E.g., Fluent Cantonese required")
+    is_referral = st.checkbox(ui_labels["referral_lbl"], value=False)
+    urgency_val = st.selectbox(ui_labels["urgency_lbl"], ui_labels["urgency_opts"])
+    special_reqs = st.text_area(ui_labels["special_req_lbl"], height=90, placeholder=ui_labels["special_req_ph"])
 
 st.markdown("---")
 
@@ -210,7 +227,7 @@ def execute_eval(hr_feedback=""):
         try:
             lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文). Only keep standard industry abbreviations if necessary." if is_zh else "Provide the ENTIRE analysis strictly in Professional Executive English."
             referral_instruction = "This candidate is an INTERNAL REFERRAL. Apply referral weighting: slightly increase trust in cultural fit and soft skills, but maintain strict baseline for hard requirements." if is_referral else ""
-            urgency_instruction = f"Hiring Urgency: {urgency}. Factor this into the Time-to-Fill risk assessment."
+            urgency_instruction = f"Hiring Urgency: {urgency_val}. Factor this into the Time-to-Fill risk assessment."
             feedback_prompt = f"\n\n### HR Human-in-the-Loop Feedback:\n{hr_feedback}\n(Update the assessment based on this real-world feedback.)" if hr_feedback.strip() else ""
 
             prompt = f"""
@@ -288,7 +305,7 @@ if st.session_state.last_analysis:
     c1.metric(ui_labels["m_score"], f"{funnel.get('competency_overall_score', 'N/A')} / 100")
     c2.metric(ui_labels["m_ats"], f"{funnel.get('ats_match_percentage', 'N/A')} %")
     c3.metric(ui_labels["m_rec"], funnel.get('funnel_recommendation', 'N/A'))
-    c4.metric(ui_labels["m_time"], "Urgent/Standard" if urgency == "緊急 (Urgent)" else "Standard")
+    c4.metric(ui_labels["m_time"], urgency_val)
     
     st.info(f"⏳ **{ui_labels['m_time']}:** {funnel.get('time_to_fill_assessment', 'N/A')}")
     st.success(f"**{ui_labels['ats_matched']}** " + ", ".join(funnel.get('matched_keywords', [])))
