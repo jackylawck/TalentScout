@@ -15,11 +15,18 @@ from utils import get_scored_industries, build_dynamic_industry_context
 # ==========================================
 # 1. Page Config & State Initialization
 # ==========================================
-st.set_page_config(page_title="慧聘 · 智析官 | TalentScout AI", page_icon="🎯", layout="wide")
+st.set_page_config(
+    page_title="慧聘 · 智析官 | TalentScout AI",
+    page_icon="🎯",
+    layout="wide"
+)
 
-if 'usage_count' not in st.session_state: st.session_state.usage_count = 0
-if 'analysis_results' not in st.session_state: st.session_state.analysis_results = {}  
-if 'hr_feedback_history' not in st.session_state: st.session_state.hr_feedback_history = {} 
+if 'usage_count' not in st.session_state:
+    st.session_state.usage_count = 0
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = {}  
+if 'hr_feedback_history' not in st.session_state:
+    st.session_state.hr_feedback_history = {} 
 
 token_github = st.secrets.get("GITHUB_TOKEN", "")
 token_gemini = st.secrets.get("GEMINI_API_KEY", "")
@@ -32,7 +39,7 @@ UI_ZH = {
     "key_mode": "選擇 AI 金鑰模式：",
     "default_key": "使用開源公共免費額度 (單次 1 份 CV)",
     "byok_key": "使用自備 AI API Key (支援多 CV 批量)",
-    "loaded_default": "🌱 **開源公共資源已載入 (10次/Session)**。\n\n⚠️ **資安提示：** 此模式僅供系統功能演示，請勿上傳包含機密個資的真實履歷。請切換為自備 Key 以落實零數據留存。",
+    "loaded_default": "🌱 **開源公共資源已載入 (10次/Session)**。\n\n⚠️ **資安提示：** 此模式僅供系統功能演示，請勿上傳包含高度機密個資的真實履歷。處理真實招聘數據時，強烈建議切換為自備 Key 以落實零數據留存。",
     "quota_exceeded": "🤝 **本 Session 試用額度已達上限。** 請切換至『使用自備 AI API Key』！",
     "single_cv_notice": "💡 **免費試用提示：** 公共額度每次限解析 **1 份 CV**。如需批量對比多位候選人，請切換自備 Key。",
     "select_provider": "選擇 AI 供應商：",
@@ -40,7 +47,7 @@ UI_ZH = {
     "framework_title": "🛡️ 數據安全與中西 HR 理論管治",
     "framework_body": """
     **🔐 企業隱私防護:** BYOK 模式下運算僅存於本地 Session。
-    **🎯 動態矩陣注入 (Matrix RAG):** 基於 Log-TF 權重過濾 Top-N 產業生態交集。
+    **🎯 雙重指令防護:** 動態矩陣注入 (Matrix RAG) 結合絕對強制規則。
     **🧠 冰山模型與 MECE 審計:** 消除邏輯矛盾，精算年資。
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)",
@@ -59,6 +66,9 @@ UI_ZH = {
     "urgency_opts": ["標準 (Standard)", "緊急 (Urgent)"],
     "special_req_lbl": "其他特殊要求 (JD 補充)",
     "run_btn": "🚀 啟動多維度 ATS 解析與結構化評估",
+    "status_analyzing": "🚀 正在獨立解析候選人：{}",
+    "err_json": "❌ AI 回傳格式解析失敗。請嘗試重新執行。",
+    "err_api": "❌ API 呼叫失敗。請檢查 API Key 或網路連線。",
     "ranking_title": "🏆 候選人綜合排名對比 (Candidate Ranking)",
     "sec1_title": "📊 1. 漏斗決策與 ATS 匹配度",
     "m_score": "綜合勝任力得分",
@@ -85,20 +95,63 @@ UI_ZH = {
 }
 
 UI_EN = {
-    "sys_config": "⚙️ System Config", "key_mode": "Select AI Key Mode:", "default_key": "Use Open-Source Public Quota (1 CV max)", "byok_key": "Use Custom API Key (Batch CVs enabled)",
-    "loaded_default": "🌱 **Public Quota Loaded.**\n\n⚠️ **Security Notice:** This mode is for demonstration only.", "quota_exceeded": "🤝 **Quota Reached!** Switch to 'Custom Key'.",
-    "single_cv_notice": "💡 **Free Quota Notice:** Max 1 CV per run.", "select_provider": "Select AI Provider:", "enter_key": "Enter your {} Key",
-    "framework_title": "🛡️ Privacy & HR Science Governance", "framework_body": "**🔐 Enterprise Privacy:** BYOK Processed in-memory.\n**🎯 Matrix RAG Injection:** Top-N industry intersection via Log-TF.\n**🧠 Iceberg & MECE:** Resolves contradictions.",
-    "title": "🎯 TalentScout AI", "subtitle": "🚀 **Enterprise ATS Screening & Competency Assessment**",
-    "col1_title": "📄 1. Job Description (JD)", "input_modes": ["Paste Text", "Upload Files"], "jd_ph": "Paste JD content...", "upload_jd_lbl": "Upload JD (PDF, DOCX)",
-    "col2_title": "👤 2. Candidate Resumes (CV)", "upload_cv_lbl": "Upload CV Files",
-    "col3_title": "🎯 3. Hiring Context", "target_level_lbl": "🎯 Target Level", "target_levels": ["Entry Level", "Junior Professional", "Senior Professional", "Team Lead", "Manager", "Senior Manager", "Director", "Head of Department", "C-Suite"],
-    "referral_lbl": "🎖️ Internal Referral", "urgency_lbl": "⏳ Urgency", "urgency_opts": ["Standard", "Urgent"], "special_req_lbl": "Special Requirements (JD Add-on)",
-    "run_btn": "🚀 Run ATS & Competency Audit", "ranking_title": "🏆 Candidate Ranking",
-    "sec1_title": "📊 1. Funnel Verdict & ATS Match", "m_score": "Competency Score", "m_ats": "ATS Keyword Match", "m_rec": "💡 Executive Summary", "m_time": "⏳ Time-to-Fill & Risk Assessment", "ats_matched": "✅ Matched Keywords:", "ats_missing": "❌ Missing Keywords:",
-    "sec2_title": "📈 2. Core Competency Breakdown", "sec3_title": "🛡️ 3. DEI Safeguards & Risk Governance", "dei_check": "⚖️ DEI Bias Mitigation:", "hard_risks": "🚨 Hard Risks / Blocks:", "soft_risks": "⚠️ Soft Risks / Focus:",
-    "sec4_title": "🎯 4. Structured Interview Rubric", "sec4_sub": "💡 *Standardized scoring rubrics.*", "probe_q": "🗣️ Behavioral Question (STAR):", "rubric_5": "🟢 5 pts (Excellent):", "rubric_3": "🟡 3 pts (Acceptable):", "rubric_1": "🔴 1 pt (Poor):",
-    "sec5_title": "🤝 5. Human-in-the-Loop Re-eval", "feedback_ph": "Enter HR screening notes...", "re_eval_btn": "🔄 Update Evaluation", "download_btn": "📥 Download Report (MD)"
+    "sys_config": "⚙️ System Config",
+    "key_mode": "Select AI Key Mode:",
+    "default_key": "Use Open-Source Public Quota (1 CV max)",
+    "byok_key": "Use Custom API Key (Batch CVs enabled)",
+    "loaded_default": "🌱 **Public Quota Loaded (10 uses/session).**\n\n⚠️ **Security Notice:** This mode is for demonstration only. Please do not upload real CVs containing sensitive PII. For actual recruitment data, switch to Custom Key to ensure zero data retention.",
+    "quota_exceeded": "🤝 **Quota Reached!** Switch to 'Custom Key' to continue.",
+    "single_cv_notice": "💡 **Free Quota Notice:** Max 1 CV per run. Use Custom Key for batch processing.",
+    "select_provider": "Select AI Provider:",
+    "enter_key": "Enter your {} Key",
+    "framework_title": "🛡️ Privacy & HR Science Governance",
+    "framework_body": """
+    **🔐 Enterprise Privacy:** Processed strictly in-memory (BYOK).
+    **🎯 Dual-Layer Protection:** Matrix RAG Injection + Absolute Mandatory Rules.
+    **🧠 Iceberg & MECE:** Resolves contradictions & ensures accurate tenure math.
+    """,
+    "title": "🎯 TalentScout AI",
+    "subtitle": "🚀 **Enterprise ATS Screening & Competency Assessment**",
+    "col1_title": "📄 1. Job Description (JD)",
+    "input_modes": ["Paste Text", "Upload Files"],
+    "jd_ph": "Paste JD content...",
+    "upload_jd_lbl": "Upload JD (PDF, DOCX)",
+    "col2_title": "👤 2. Candidate Resumes (CV)",
+    "upload_cv_lbl": "Upload CV Files",
+    "col3_title": "🎯 3. Hiring Context",
+    "target_level_lbl": "🎯 Target Level",
+    "target_levels": ["Entry Level", "Junior Professional", "Senior Professional", "Team Lead", "Manager", "Senior Manager", "Director", "Head of Department", "C-Suite"],
+    "referral_lbl": "🎖️ Internal Referral",
+    "urgency_lbl": "⏳ Urgency",
+    "urgency_opts": ["Standard", "Urgent"],
+    "special_req_lbl": "Special Requirements (JD Add-on)",
+    "run_btn": "🚀 Run ATS & Competency Audit",
+    "status_analyzing": "🚀 Analyzing candidate: {}",
+    "err_json": "❌ JSON Parse Error.",
+    "err_api": "❌ API Connection Error.",
+    "ranking_title": "🏆 Candidate Ranking & Comparison",
+    "sec1_title": "📊 1. Funnel Verdict & ATS Match",
+    "m_score": "Competency Score",
+    "m_ats": "ATS Keyword Match",
+    "m_rec": "💡 Executive Summary",
+    "m_time": "⏳ Time-to-Fill & Risk Assessment",
+    "ats_matched": "✅ Matched Keywords:",
+    "ats_missing": "❌ Missing Keywords:",
+    "sec2_title": "📈 2. Core Competency Breakdown",
+    "sec3_title": "🛡️ 3. DEI Safeguards & Risk Governance",
+    "dei_check": "⚖️ DEI Bias Mitigation:",
+    "hard_risks": "🚨 Hard Risks / Blocks:",
+    "soft_risks": "⚠️ Soft Risks / Focus:",
+    "sec4_title": "🎯 4. Structured Interview Rubric",
+    "sec4_sub": "💡 *Standardized scoring rubrics based on competency.*",
+    "probe_q": "🗣️ Behavioral Question (STAR):",
+    "rubric_5": "🟢 5 pts (Excellent):",
+    "rubric_3": "🟡 3 pts (Acceptable):",
+    "rubric_1": "🔴 1 pt (Poor):",
+    "sec5_title": "🤝 5. Human-in-the-Loop Re-eval",
+    "feedback_ph": "Enter HR screening notes...",
+    "re_eval_btn": "🔄 Update Evaluation",
+    "download_btn": "📥 Download Report (MD)"
 }
 
 with st.sidebar:
@@ -190,11 +243,23 @@ def build_evaluation_prompt(lang, is_ref, target_lvl, urgency, special, jd, cv, 
     ref_inst = "This candidate is an INTERNAL REFERRAL. Apply referral weighting." if is_ref else ""
     fb_prompt = f"\n\n### HR Human-in-the-Loop Feedback:\n{feedback}" if feedback.strip() else ""
     
+    # 💡 終極防線：硬編碼防呆規則 (Double Insurance)
+    hardcoded_synergy = """
+**⚠️ 絕對強制規則 (ABSOLUTE MANDATORY RULES - 無論產業背景如何，均須遵守)：**
+1. 若候選人曾在「萬科控股 (Vanke)」、「新鴻基 (Sun Hung Kai)」、「新世界 (New World)」等地產發展商任職，其經驗 **必須** 被視為等同於「建築、物業管理、基建」行業經驗，絕對 **不能** 將「缺乏建設行業/建築經驗」列為缺失或風險。
+2. 若候選人曾在「金寶通 (Computime)」、「華為 (Huawei)」、「騰訊 (Tencent)」等科技製造或互聯網公司任職，其經驗 **必須** 被視為與「科技、電訊、IT」行業相關。
+3. 總工作年資計算必須涵蓋 **所有全職工作經歷**，包括第一份工作至今的全部年份，精確到小數點後 1 位。
+4. 所有 STAR 面試題目 **必須** 直接引用 CV 中具體出現過的職責或專案（例如「管理車隊」、「負責辦公室裝修工程」等），不得使用「處理複雜的會議安排」此類與 CV 亮點無關的通用問題。
+"""
+    
+    # 將動態注入與硬編碼防護合併
+    full_industry_context = dynamic_industry_injection + "\n" + hardcoded_synergy
+    
     return f"""
 You are an Elite Executive Search Consultant applying Global HR Science Frameworks.
 
-CRITICAL RULE 0 - DYNAMIC INDUSTRY MATRIX:
-{dynamic_industry_injection}
+CRITICAL RULE 0 - DYNAMIC INDUSTRY MATRIX & HARDCODED SAFEGUARDS:
+{full_industry_context}
 
 CRITICAL HR ADVISORY RULES:
 1. ROLE-LEVEL CALIBRATION (TARGET: {target_lvl}):
@@ -202,11 +267,11 @@ CRITICAL HR ADVISORY RULES:
    - Do NOT over-extrapolate operational/supervisory experience into strategic C-Suite leadership unless explicitly proven in the CV.
 
 2. TENURE & REASON FOR LEAVING AUDIT (MECE Calculation):
-   - Accurately calculate total years of experience across ALL employment history.
+   - Accurately calculate total years of experience across ALL employment history based on the Mandatory Rules above.
 
 3. FORCED EVIDENCE ANCHORING (NO GENERIC RUBRICS):
    - "funnel_recommendation" MUST be a comprehensive Board-level Summary citing exact metrics from the CV.
-   - **FORCED ANCHORING:** Each STAR question MUST be directly derived from a SPECIFIC responsibility explicitly mentioned in the CV.
+   - **FORCED ANCHORING:** Each STAR question MUST be directly derived from a SPECIFIC responsibility explicitly mentioned in the CV (e.g., "Based on your experience handling fleet logistics at [Company Name]...").
    - The BARS rubrics (1-3-5) MUST describe behaviors tied to that specific CV context.
 
 Language Requirement: {lang_instruction}
@@ -330,7 +395,7 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
     MAX_CHARS = 40000 
     curr_jd, curr_cv = jd_text[:MAX_CHARS//2], cv_content[:MAX_CHARS//2]
     
-    with st.status(f"🚀 正在解析候選人：{format_tab_name(cand_name)}", expanded=True) as status:
+    with st.status(get_ui("status_analyzing").format(format_tab_name(cand_name)), expanded=True) as status:
         try:
             combined_text = curr_jd + "\n" + curr_cv
             scored_industries = get_scored_industries(combined_text)
@@ -339,7 +404,6 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
             prompt = build_evaluation_prompt(is_zh, is_referral, target_lvl_val, urgency_val, special_reqs, curr_jd, curr_cv, dynamic_injection, hr_feedback)
             raw_response = run_ai_analysis(provider, api_key, prompt)
             parsed_data = robust_json_parse(raw_response)
-            
             parsed_data["_debug_logs"] = debug_logs
             
             status.update(label=f"✅ {format_tab_name(cand_name)} 分析完成", state="complete", expanded=False)
@@ -368,7 +432,7 @@ if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
             try:
                 cv_content = extract_single_file(cv_file)
                 if not cv_content.strip():
-                    raise ValueError("文件無法提取文字")
+                    raise ValueError("文件無法提取文字(可能為純圖片或加密)")
                 
                 result = process_single_candidate(cand_name, cv_content)
                 if result:
