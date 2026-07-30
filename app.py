@@ -4,50 +4,43 @@ import docx
 import json
 import re
 import time
+import pandas as pd
 from openai import OpenAI
 from google import genai
 from google.genai import types
 import traceback
 
-# 💡 匯入動態計分引擎
 from utils import get_scored_industries, build_dynamic_industry_context
 
 # ==========================================
 # 1. Page Config & State Initialization
 # ==========================================
-st.set_page_config(
-    page_title="慧聘 · 智析官 | TalentScout AI",
-    page_icon="🎯",
-    layout="wide"
-)
+st.set_page_config(page_title="慧聘 · 智析官 | TalentScout AI", page_icon="🎯", layout="wide")
 
-if 'usage_count' not in st.session_state:
-    st.session_state.usage_count = 0
-if 'analysis_results' not in st.session_state:
-    st.session_state.analysis_results = {}  
-if 'hr_feedback_history' not in st.session_state:
-    st.session_state.hr_feedback_history = {} 
+if 'usage_count' not in st.session_state: st.session_state.usage_count = 0
+if 'analysis_results' not in st.session_state: st.session_state.analysis_results = {}  
+if 'hr_feedback_history' not in st.session_state: st.session_state.hr_feedback_history = {} 
 
 token_github = st.secrets.get("GITHUB_TOKEN", "")
 token_gemini = st.secrets.get("GEMINI_API_KEY", "")
 
 # ==========================================
-# 2. Localization Dictionaries (雙語完全支援)
+# 2. Localization Dictionaries
 # ==========================================
 UI_ZH = {
     "sys_config": "⚙️ 系統設定",
     "key_mode": "選擇 AI 金鑰模式：",
     "default_key": "使用開源公共免費額度 (單次 1 份 CV)",
     "byok_key": "使用自備 AI API Key (支援多 CV 批量)",
-    "loaded_default": "🌱 **開源公共資源已載入 (10次/Session)**。免費模式下**每次限上傳 1 份 CV**。",
+    "loaded_default": "🌱 **開源公共資源已載入 (10次/Session)**。\n\n⚠️ **資安提示：** 此模式僅供系統功能演示，請勿上傳包含機密個資的真實履歷。請切換為自備 Key 以落實零數據留存。",
     "quota_exceeded": "🤝 **本 Session 試用額度已達上限。** 請切換至『使用自備 AI API Key』！",
-    "single_cv_notice": "💡 **免費試用提示：** 開源免費額度每次限解析 **1 份 CV**。如需批量解析，請切換自備 Key。",
+    "single_cv_notice": "💡 **免費試用提示：** 公共額度每次限解析 **1 份 CV**。如需批量對比多位候選人，請切換自備 Key。",
     "select_provider": "選擇 AI 供應商：",
     "enter_key": "輸入你的 {} Key",
     "framework_title": "🛡️ 數據安全與中西 HR 理論管治",
     "framework_body": """
-    **🔐 企業隱私防護:** 運算僅存於本地 Session 記憶體。
-    **🎯 動態知識注入 (RAG):** 基於 Log-TF 權重過濾 Top-N 產業生態。
+    **🔐 企業隱私防護:** BYOK 模式下運算僅存於本地 Session。
+    **🎯 動態矩陣注入 (Matrix RAG):** 基於 Log-TF 權重過濾 Top-N 產業生態交集。
     **🧠 冰山模型與 MECE 審計:** 消除邏輯矛盾，精算年資。
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)",
@@ -59,14 +52,14 @@ UI_ZH = {
     "col2_title": "👤 2. 求職者履歷 (CV)",
     "upload_cv_lbl": "上傳 CV 檔案",
     "col3_title": "🎯 3. 招聘情境與設定",
+    "target_level_lbl": "🎯 目標職級 (Target Level)",
+    "target_levels": ["Entry Level", "Junior Professional", "Senior Professional", "Team Lead", "Manager", "Senior Manager", "Director", "Head of Department", "C-Suite"],
     "referral_lbl": "🎖️ 此批次包含內部員工推薦",
     "urgency_lbl": "⏳ 職位招聘急迫性",
     "urgency_opts": ["標準 (Standard)", "緊急 (Urgent)"],
     "special_req_lbl": "其他特殊要求 (JD 補充)",
     "run_btn": "🚀 啟動多維度 ATS 解析與結構化評估",
-    "status_analyzing": "🚀 正在獨立解析候選人：{}",
-    "err_json": "❌ AI 回傳格式解析失敗。請嘗試重新執行。",
-    "err_api": "❌ API 呼叫失敗。請檢查 API Key 或網路連線。",
+    "ranking_title": "🏆 候選人綜合排名對比 (Candidate Ranking)",
     "sec1_title": "📊 1. 漏斗決策與 ATS 匹配度",
     "m_score": "綜合勝任力得分",
     "m_ats": "ATS 關鍵字匹配率",
@@ -92,65 +85,24 @@ UI_ZH = {
 }
 
 UI_EN = {
-    "sys_config": "⚙️ System Config",
-    "key_mode": "Select AI Key Mode:",
-    "default_key": "Use Open-Source Public Quota (1 CV max)",
-    "byok_key": "Use Custom API Key (Batch CVs enabled)",
-    "loaded_default": "🌱 **Public Quota Loaded (10 uses/session).** Free mode max 1 CV per run.",
-    "quota_exceeded": "🤝 **Quota Reached!** Switch to 'Custom Key' to continue.",
-    "single_cv_notice": "💡 **Free Quota Notice:** Max 1 CV per run. Use Custom Key for batch processing.",
-    "select_provider": "Select AI Provider:",
-    "enter_key": "Enter your {} Key",
-    "framework_title": "🛡️ Privacy & HR Science Governance",
-    "framework_body": """
-    **🔐 Enterprise Privacy:** Processed strictly in-memory.
-    **🎯 Dynamic RAG Injection:** Top-N industry filtering via Log-TF scoring.
-    **🧠 Iceberg & MECE:** Resolves contradictions & ensures accurate tenure math.
-    """,
-    "title": "🎯 TalentScout AI",
-    "subtitle": "🚀 **Enterprise ATS Screening & Competency Assessment**",
-    "col1_title": "📄 1. Job Description (JD)",
-    "input_modes": ["Paste Text", "Upload Files"],
-    "jd_ph": "Paste JD content...",
-    "upload_jd_lbl": "Upload JD (PDF, DOCX)",
-    "col2_title": "👤 2. Candidate Resumes (CV)",
-    "upload_cv_lbl": "Upload CV Files",
-    "col3_title": "🎯 3. Hiring Context",
-    "referral_lbl": "🎖️ Internal Referral",
-    "urgency_lbl": "⏳ Urgency",
-    "urgency_opts": ["Standard", "Urgent"],
-    "special_req_lbl": "Special Requirements (JD Add-on)",
-    "run_btn": "🚀 Run ATS & Competency Audit",
-    "status_analyzing": "🚀 Analyzing candidate: {}",
-    "err_json": "❌ JSON Parse Error.",
-    "err_api": "❌ API Connection Error.",
-    "sec1_title": "📊 1. Funnel Verdict & ATS Match",
-    "m_score": "Competency Score",
-    "m_ats": "ATS Keyword Match",
-    "m_rec": "💡 Executive Summary",
-    "m_time": "⏳ Time-to-Fill & Risk Assessment",
-    "ats_matched": "✅ Matched Keywords:",
-    "ats_missing": "❌ Missing Keywords:",
-    "sec2_title": "📈 2. Core Competency Breakdown",
-    "sec3_title": "🛡️ 3. DEI Safeguards & Risk Governance",
-    "dei_check": "⚖️ DEI Bias Mitigation:",
-    "hard_risks": "🚨 Hard Risks / Blocks:",
-    "soft_risks": "⚠️ Soft Risks / Focus:",
-    "sec4_title": "🎯 4. Structured Interview Rubric",
-    "sec4_sub": "💡 *Standardized scoring rubrics based on competency.*",
-    "probe_q": "🗣️ Behavioral Question (STAR):",
-    "rubric_5": "🟢 5 pts (Excellent):",
-    "rubric_3": "🟡 3 pts (Acceptable):",
-    "rubric_1": "🔴 1 pt (Poor):",
-    "sec5_title": "🤝 5. Human-in-the-Loop Re-eval",
-    "feedback_ph": "Enter HR screening notes...",
-    "re_eval_btn": "🔄 Update Evaluation",
-    "download_btn": "📥 Download Report (MD)"
+    "sys_config": "⚙️ System Config", "key_mode": "Select AI Key Mode:", "default_key": "Use Open-Source Public Quota (1 CV max)", "byok_key": "Use Custom API Key (Batch CVs enabled)",
+    "loaded_default": "🌱 **Public Quota Loaded.**\n\n⚠️ **Security Notice:** This mode is for demonstration only.", "quota_exceeded": "🤝 **Quota Reached!** Switch to 'Custom Key'.",
+    "single_cv_notice": "💡 **Free Quota Notice:** Max 1 CV per run.", "select_provider": "Select AI Provider:", "enter_key": "Enter your {} Key",
+    "framework_title": "🛡️ Privacy & HR Science Governance", "framework_body": "**🔐 Enterprise Privacy:** BYOK Processed in-memory.\n**🎯 Matrix RAG Injection:** Top-N industry intersection via Log-TF.\n**🧠 Iceberg & MECE:** Resolves contradictions.",
+    "title": "🎯 TalentScout AI", "subtitle": "🚀 **Enterprise ATS Screening & Competency Assessment**",
+    "col1_title": "📄 1. Job Description (JD)", "input_modes": ["Paste Text", "Upload Files"], "jd_ph": "Paste JD content...", "upload_jd_lbl": "Upload JD (PDF, DOCX)",
+    "col2_title": "👤 2. Candidate Resumes (CV)", "upload_cv_lbl": "Upload CV Files",
+    "col3_title": "🎯 3. Hiring Context", "target_level_lbl": "🎯 Target Level", "target_levels": ["Entry Level", "Junior Professional", "Senior Professional", "Team Lead", "Manager", "Senior Manager", "Director", "Head of Department", "C-Suite"],
+    "referral_lbl": "🎖️ Internal Referral", "urgency_lbl": "⏳ Urgency", "urgency_opts": ["Standard", "Urgent"], "special_req_lbl": "Special Requirements (JD Add-on)",
+    "run_btn": "🚀 Run ATS & Competency Audit", "ranking_title": "🏆 Candidate Ranking",
+    "sec1_title": "📊 1. Funnel Verdict & ATS Match", "m_score": "Competency Score", "m_ats": "ATS Keyword Match", "m_rec": "💡 Executive Summary", "m_time": "⏳ Time-to-Fill & Risk Assessment", "ats_matched": "✅ Matched Keywords:", "ats_missing": "❌ Missing Keywords:",
+    "sec2_title": "📈 2. Core Competency Breakdown", "sec3_title": "🛡️ 3. DEI Safeguards & Risk Governance", "dei_check": "⚖️ DEI Bias Mitigation:", "hard_risks": "🚨 Hard Risks / Blocks:", "soft_risks": "⚠️ Soft Risks / Focus:",
+    "sec4_title": "🎯 4. Structured Interview Rubric", "sec4_sub": "💡 *Standardized scoring rubrics.*", "probe_q": "🗣️ Behavioral Question (STAR):", "rubric_5": "🟢 5 pts (Excellent):", "rubric_3": "🟡 3 pts (Acceptable):", "rubric_1": "🔴 1 pt (Poor):",
+    "sec5_title": "🤝 5. Human-in-the-Loop Re-eval", "feedback_ph": "Enter HR screening notes...", "re_eval_btn": "🔄 Update Evaluation", "download_btn": "📥 Download Report (MD)"
 }
 
 with st.sidebar:
     output_lang = st.selectbox("🌐 界面與報告語言 (UI & Output Language):", ["繁體中文 (Traditional Chinese)", "English (Full)"], index=0)
-    # 🧪 新增除錯模式 Toggle
     debug_mode = st.toggle("🧪 啟動 AI 決策除錯模式 (Explainability Log)", value=False)
     st.divider()
 
@@ -177,7 +129,8 @@ with st.sidebar:
     if key_mode == get_ui("default_key"):
         provider = "GitHub Models" if token_github else "Google Gemini"
         api_key = token_github or token_gemini
-        st.info(get_ui("loaded_default") + f"\n\n*(Engine: **{provider}**)*")
+        st.warning(get_ui("loaded_default"))
+        st.info(f"*(Engine: **{provider}**)*")
     else:
         provider = st.selectbox(get_ui("select_provider"), list(AI_PROVIDERS.keys()))
         api_key = st.text_input(get_ui("enter_key").format(provider), type="password")
@@ -216,15 +169,10 @@ def extract_text_from_files(uploaded_files):
     return "\n".join([extract_single_file(f) for f in uploaded_files])
 
 def format_tab_name(filename):
-    # 僅移除副檔名
     base = re.sub(r'(?i)\.(pdf|docx|doc)$', '', filename)
-    # 移除常見的履歷後綴，保留姓名前綴
     clean = re.sub(r'(?i)[-_\s]*(resume|cv|profile|履歷).*', '', base).strip()
-    if not clean:
-        return "Candidate"
-    # 若名稱過長強制縮略
-    if len(clean) > 20:
-        return clean[:15] + "..."
+    if not clean: return "Candidate"
+    if len(clean) > 20: return clean[:15] + "..."
     return clean
 
 def robust_json_parse(raw_text):
@@ -237,7 +185,7 @@ def robust_json_parse(raw_text):
     except Exception as e:
         raise ValueError("JSON Parsing Failed")
 
-def build_evaluation_prompt(lang, is_ref, urgency, special, jd, cv, dynamic_industry_injection, feedback=""):
+def build_evaluation_prompt(lang, is_ref, target_lvl, urgency, special, jd, cv, dynamic_industry_injection, feedback=""):
     lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文)..." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English..."
     ref_inst = "This candidate is an INTERNAL REFERRAL. Apply referral weighting." if is_ref else ""
     fb_prompt = f"\n\n### HR Human-in-the-Loop Feedback:\n{feedback}" if feedback.strip() else ""
@@ -245,19 +193,21 @@ def build_evaluation_prompt(lang, is_ref, urgency, special, jd, cv, dynamic_indu
     return f"""
 You are an Elite Executive Search Consultant applying Global HR Science Frameworks.
 
-CRITICAL HR ADVISORY RULES:
-1. DYNAMIC INDUSTRY MAPPING (RAG INJECTION):
+CRITICAL RULE 0 - DYNAMIC INDUSTRY MATRIX:
 {dynamic_industry_injection}
 
-2. FULL-TEXT SCAN (EDUCATION & CERTIFICATIONS):
-   - Scan the ENTIRE CV including Education, Licenses, and Training. Acknowledge academic/certified fit!
+CRITICAL HR ADVISORY RULES:
+1. ROLE-LEVEL CALIBRATION (TARGET: {target_lvl}):
+   - Evaluate leadership and competencies STRICTLY based on the {target_lvl} level.
+   - Do NOT over-extrapolate operational/supervisory experience into strategic C-Suite leadership unless explicitly proven in the CV.
 
-3. TENURE & REASON FOR LEAVING AUDIT (MECE Calculation):
+2. TENURE & REASON FOR LEAVING AUDIT (MECE Calculation):
    - Accurately calculate total years of experience across ALL employment history.
 
-4. HIGH-DENSITY EXECUTIVE SUMMARY & BARS RUBRICS:
-   - "funnel_recommendation" MUST be a comprehensive Board-level Executive Summary.
-   - STAR questions and BARS rubrics (1-3-5) MUST explicitly reference REAL ACCOMPLISHMENTS found in the CV.
+3. FORCED EVIDENCE ANCHORING (NO GENERIC RUBRICS):
+   - "funnel_recommendation" MUST be a comprehensive Board-level Summary citing exact metrics from the CV.
+   - **FORCED ANCHORING:** Each STAR question MUST be directly derived from a SPECIFIC responsibility explicitly mentioned in the CV.
+   - The BARS rubrics (1-3-5) MUST describe behaviors tied to that specific CV context.
 
 Language Requirement: {lang_instruction}
 Context: {ref_inst} {urgency} {special} {fb_prompt}
@@ -274,7 +224,7 @@ Format your output STRICTLY in valid JSON matching this schema:
   }},
   "competency_breakdown": [
     {{ "dimension": "Surface Competencies", "score": "85/100", "justification": "...", "evidence": "..." }},
-    {{ "dimension": "Core Leadership", "score": "90/100", "justification": "...", "evidence": "..." }}
+    {{ "dimension": "Core Execution & Leadership", "score": "90/100", "justification": "...", "evidence": "..." }}
   ],
   "dei_and_risks": {{
     "dei_safeguard_applied": "...",
@@ -283,9 +233,9 @@ Format your output STRICTLY in valid JSON matching this schema:
   }},
   "structured_interview_rubric": [
     {{
-      "competency_tested": "...",
-      "star_question": "...",
-      "rubric_5_excellent": "...",
+      "competency_tested": "Specific skill anchored in CV",
+      "star_question": "Based on your experience doing [Specific Task] at [Specific Company], tell me about a time...",
+      "rubric_5_excellent": "Specific action tied to the prompt context...",
       "rubric_3_acceptable": "...",
       "rubric_1_poor": "..."
     }}
@@ -333,12 +283,10 @@ def generate_markdown_report(cand_name, data):
     md += f"- **{get_ui('m_rec')}:** {funnel.get('funnel_recommendation', 'N/A')}\n"
     md += f"- **{get_ui('ats_matched')}** {', '.join(funnel.get('matched_keywords', []))}\n"
     md += f"- **{get_ui('ats_missing')}** {', '.join(funnel.get('missing_keywords', []))}\n\n"
-    
     md += f"## {get_ui('sec2_title')}\n"
     for item in data.get('competency_breakdown', []):
         md += f"### {item.get('dimension', 'N/A')} - Score: {item.get('score', 'N/A')}\n"
         md += f"> {item.get('justification', '')} *(Evidence: {item.get('evidence', '')})*\n\n"
-        
     md += f"## {get_ui('sec3_title')}\n"
     md += f"- **{get_ui('dei_check')}** {dei.get('dei_safeguard_applied', 'N/A')}\n"
     md += f"- **{get_ui('hard_risks')}** {', '.join(dei.get('hard_risks', []))}\n"
@@ -354,9 +302,10 @@ st.caption(get_ui("subtitle"))
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
     st.subheader(get_ui("col1_title"))
-    jd_input_type = st.radio("輸入方式", get_ui("input_modes"), horizontal=True, label_visibility="collapsed")
-    if jd_input_type in ["貼上文字", "Paste Text"]:
-        jd_text = st.text_area("JD 內容", height=200, placeholder=get_ui("jd_ph"), label_visibility="collapsed")
+    input_options = get_ui("input_modes")
+    jd_input_type = st.radio("Input Mode", input_options, horizontal=True, label_visibility="collapsed")
+    if jd_input_type == input_options[0]:
+        jd_text = st.text_area("JD Input", height=200, placeholder=get_ui("jd_ph"), label_visibility="collapsed")
     else:
         jd_files = st.file_uploader(get_ui("upload_jd_lbl"), type=["pdf", "docx"], accept_multiple_files=True)
         jd_text = extract_text_from_files(jd_files)
@@ -367,6 +316,7 @@ with col2:
 
 with col3:
     st.subheader(get_ui("col3_title"))
+    target_lvl_val = st.selectbox(get_ui("target_level_lbl"), get_ui("target_levels"), index=4)
     is_referral = st.checkbox(get_ui("referral_lbl"), value=False)
     urgency_val = st.selectbox(get_ui("urgency_lbl"), get_ui("urgency_opts"))
     special_reqs = st.text_area(get_ui("special_req_lbl"), height=90)
@@ -380,26 +330,24 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
     MAX_CHARS = 40000 
     curr_jd, curr_cv = jd_text[:MAX_CHARS//2], cv_content[:MAX_CHARS//2]
     
-    with st.status(get_ui("status_analyzing").format(format_tab_name(cand_name)), expanded=True) as status:
+    with st.status(f"🚀 正在解析候選人：{format_tab_name(cand_name)}", expanded=True) as status:
         try:
-            # 💡 獨立匹配：為每位候選人單獨計算結合 JD 與 CV 的產業關聯分數
             combined_text = curr_jd + "\n" + curr_cv
             scored_industries = get_scored_industries(combined_text)
-            dynamic_injection = build_dynamic_industry_context(scored_industries)
+            dynamic_injection, debug_logs = build_dynamic_industry_context(scored_industries)
             
-            prompt = build_evaluation_prompt(is_zh, is_referral, urgency_val, special_reqs, curr_jd, curr_cv, dynamic_injection, hr_feedback)
+            prompt = build_evaluation_prompt(is_zh, is_referral, target_lvl_val, urgency_val, special_reqs, curr_jd, curr_cv, dynamic_injection, hr_feedback)
             raw_response = run_ai_analysis(provider, api_key, prompt)
             parsed_data = robust_json_parse(raw_response)
             
-            # 存入 data 供 Explainability UI 使用
-            parsed_data["_debug_industries"] = scored_industries
+            parsed_data["_debug_logs"] = debug_logs
             
             status.update(label=f"✅ {format_tab_name(cand_name)} 分析完成", state="complete", expanded=False)
             return parsed_data
         except Exception as e:
             status.update(label=f"❌ {format_tab_name(cand_name)} 分析失敗", state="error")
             print(f"[DEBUG - {cand_name}] {traceback.format_exc()}")
-            raise e # 拋出異常供外部迴圈捕捉
+            raise e 
 
 if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
     if not api_key or not jd_text.strip() or not cv_files:
@@ -410,7 +358,7 @@ if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
         check_quota()
         st.session_state.analysis_results = {}
         st.session_state.hr_feedback_history = {}
-        st.session_state.failed_cvs = [] # 追蹤失敗名單
+        st.session_state.failed_cvs = [] 
         
         files_to_process = [cv_files[0]] if key_mode == get_ui("default_key") else cv_files
         
@@ -420,7 +368,7 @@ if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
             try:
                 cv_content = extract_single_file(cv_file)
                 if not cv_content.strip():
-                    raise ValueError("文件無法提取文字(可能為純圖片或加密)")
+                    raise ValueError("文件無法提取文字")
                 
                 result = process_single_candidate(cand_name, cv_content)
                 if result:
@@ -429,28 +377,42 @@ if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
             except Exception as e:
                 st.session_state.failed_cvs.append(f"{cand_name} ({str(e)})")
                 
-        # 統一報錯展示
         if st.session_state.failed_cvs:
             st.error(f"⚠️ 以下候選人解析失敗：\n" + "\n".join([f"- {f}" for f in st.session_state.failed_cvs]))
 
 # ==========================================
-# 7. Render Multi-CV Tabs & Debug UI
+# 7. Render Multi-CV Tabs & Ranking
 # ==========================================
 if st.session_state.analysis_results:
     cand_names = list(st.session_state.analysis_results.keys())
+    
+    if len(cand_names) > 1:
+        st.markdown(f"### {get_ui('ranking_title')}")
+        ranking_data = []
+        for name in cand_names:
+            funnel = st.session_state.analysis_results[name].get('funnel_and_ats', {})
+            ranking_data.append({
+                "候選人 (Candidate)": format_tab_name(name),
+                "綜合得分 (Score)": funnel.get('competency_overall_score', 0),
+                "ATS 匹配率 (ATS Match)": f"{funnel.get('ats_match_percentage', 0)}%"
+            })
+        df_ranking = pd.DataFrame(ranking_data).sort_values(by="綜合得分 (Score)", ascending=False).reset_index(drop=True)
+        st.dataframe(df_ranking, use_container_width=True)
+        st.markdown("---")
+
     tabs = st.tabs([f"👤 {format_tab_name(name)}" for name in cand_names])
     
     for i, cand_name in enumerate(cand_names):
         with tabs[i]:
             data = st.session_state.analysis_results[cand_name]
             
-            # 🧪 顯示 ISO 42001 可解釋性除錯日誌
-            if debug_mode and "_debug_industries" in data:
-                with st.expander("🛡️ ISO 42001 可解釋性除錯日誌 (Explainability Debug Log)", expanded=True):
-                    st.caption("展示 AI 如何使用 Log-TF 權重動態對齊產業板塊 (Top 2 Scoring):")
-                    for ind in data["_debug_industries"]:
-                        st.markdown(f"**{ind['industry']}** (Score: `{ind['score']}`)")
-                        st.caption(f"命中關鍵字: `{', '.join(ind['matched_terms'])}`")
+            if debug_mode and "_debug_logs" in data:
+                with st.expander("🛡️ ISO 42001 演算法可解釋性日誌 (Matrix Hit & Intersections)", expanded=True):
+                    st.caption("展示動態矩陣交集與跨產業聯動規則:")
+                    for log in data["_debug_logs"]:
+                        st.markdown(f"**{log['industry']}** (Score: `{log['score']}`)")
+                        st.caption(f"🎯 命中特徵: `{', '.join(log['matched_terms'])}`")
+                        st.info(f"🔄 觸發動態規則: {log['dynamic_rule']}")
             
             funnel = data.get('funnel_and_ats', {})
             dei = data.get('dei_and_risks', {})
@@ -504,7 +466,6 @@ if st.session_state.analysis_results:
             with col_eval:
                 if st.button(get_ui("re_eval_btn"), key=f"btn_{cand_name}", use_container_width=True):
                     if new_fb.strip():
-                        check_quota()
                         target_cv_text = ""
                         for f in cv_files:
                             if f.name == cand_name:
