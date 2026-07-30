@@ -41,14 +41,16 @@ UI_ZH = {
     "single_cv_notice": "💡 **免費試用提示：** 開源免費額度每次限解析 **1 份 CV**。如需一次批量解析多份履歷，請於左側切換為「使用自備 AI API Key」。",
     "select_provider": "選擇 AI 供應商：",
     "enter_key": "輸入你的 {} Key",
-    "framework_title": "🛡️ 數據安全與進階 HR 管治特色",
+    "framework_title": "🛡️ 數據安全與中西 HR 理論管治",
     "framework_body": """
     **🔐 企業隱私防護:**
     - **零數據留存:** 運算僅存於本地 Session 記憶體，重整即刻物理銷毀。
-    **🎯 進階 HR Tech 引擎:**
-    - **多 CV 獨立解析 (BYOK 模式):** 批量上傳，獨立分頁精準生成決策報告。
-    - **深度 DEI 詞彙偵測:** 具體揪出潛在偏見字眼並提供修正。
-    - **決策報告一鍵匯出:** 支援將分析結果匯出為 Markdown。
+    **🎯 融入 5 大 HR 招聘理論引擎:**
+    - **冰山模型 (Iceberg):** 兼顧水面上硬技能與水面下勝任力。
+    - **MECE 審計:** 避免邏輯矛盾與年資算錯問題。
+    - **STAR & BARS 面試量規:** 具體描繪 1-3-5 分行為表現。
+    - **DEI 多元包容:** 杜絕院校光環與年齡隱形偏見。
+    - **人崗/人企雙重匹配:** 深度洞察 Overqualify 與薪酬調整風險。
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)",
     "subtitle": "🚀 **企業級 ATS 智慧初篩、勝任力評估與多元包容 (DEI) 管治系統**",
@@ -76,18 +78,18 @@ UI_ZH = {
     "m_time": "到職時效評估",
     "ats_matched": "✅ 命中關鍵字:",
     "ats_missing": "❌ 缺失關鍵字:",
-    "sec2_title": "📈 2. 核心勝任力維度拆解",
+    "sec2_title": "📈 2. 核心勝任力維度拆解 (冰山模型)",
     "evidence_source": "證據來源",
     "sec3_title": "🛡️ 3. DEI 防偏誤審查與風險管治",
     "dei_check": "⚖️ DEI 潛在偏見詞彙與防偏誤措施:",
     "hard_risks": "🚨 絕對風險/合規死線:",
     "soft_risks": "⚠️ 軟性風險/面試觀察點:",
-    "sec4_title": "🎯 4. 結構化面試量表 (STAR)",
+    "sec4_title": "🎯 4. 結構化面試量表 (STAR & BARS 法則)",
     "sec4_sub": "💡 *基於勝任力模型生成之標準化評分題庫，確保面試官評分一致性。*",
-    "probe_q": "🗣️ 面試題:",
-    "rubric_5": "🟢 5分 (優秀):",
-    "rubric_3": "🟡 3分 (合格):",
-    "rubric_1": "🔴 1分 (需關注):",
+    "probe_q": "🗣️ 面試題 (STAR):",
+    "rubric_5": "🟢 5分 (優秀 - BARS):",
+    "rubric_3": "🟡 3分 (合格 - BARS):",
+    "rubric_1": "🔴 1分 (需關注 - BARS):",
     "sec5_title": "🤝 5. HR 漏斗覆核與動態校正 (HITL)",
     "feedback_ph": "輸入針對此候選人的初篩結果或補充觀察...",
     "re_eval_btn": "🔄 結合 HR 反饋重新校正此候選人模型",
@@ -104,14 +106,16 @@ UI_EN = {
     "single_cv_notice": "💡 **Free Quota Notice:** Public quota processes **1 CV per run**. Switch to 'Custom Key' in sidebar for multi-CV batch processing.",
     "select_provider": "Select AI Provider:",
     "enter_key": "Enter your {} Key",
-    "framework_title": "🛡️ Privacy & AI Governance",
+    "framework_title": "🛡️ Privacy & HR Science Governance",
     "framework_body": """
     **🔐 Enterprise Privacy Guarantee:**
     - **Zero Retention:** Processed strictly in-memory per session.
-    **🎯 Advanced HR Tech Engine:**
-    - **Isolated Multi-CV Tabs (BYOK Mode):** Process batch uploads with independent tabs.
-    - **Deep DEI Auditing:** Explicitly flags biased terminology.
-    - **One-Click Export:** Download full assessment reports in Markdown.
+    **🎯 Embedded HR Science Engines:**
+    - **Iceberg Model:** Evaluates surface hard skills & underlying competencies.
+    - **MECE Audit:** Eliminates calculation errors & logical contradictions.
+    - **STAR & BARS Rubrics:** Explicit 1-3-5 point behavioral benchmarks.
+    - **DEI Bias Mitigation:** Safeguards against pedigree & age biases.
+    - **Job-Fit & Org-Fit:** Uncovers overqualification & salary adjustment risks.
     """,
     "title": "🎯 TalentScout AI",
     "subtitle": "🚀 **Enterprise ATS Screening, Competency Assessment & DEI Governance System**",
@@ -139,18 +143,18 @@ UI_EN = {
     "m_time": "Time-to-Fill Assessment",
     "ats_matched": "✅ Matched Keywords:",
     "ats_missing": "❌ Missing Keywords:",
-    "sec2_title": "📈 2. Core Competency Breakdown",
+    "sec2_title": "📈 2. Core Competency Breakdown (Iceberg Model)",
     "evidence_source": "Evidence Source",
     "sec3_title": "🛡️ 3. DEI Safeguards & Risk Governance",
     "dei_check": "⚖️ DEI Biased Keywords Flagged & Mitigation:",
     "hard_risks": "🚨 Hard Risks / Compliance Blocks:",
     "soft_risks": "⚠️ Soft Risks / Interview Focus:",
-    "sec4_title": "🎯 4. Structured Interview Rubric (STAR)",
+    "sec4_title": "🎯 4. Structured Interview Rubric (STAR & BARS Methodology)",
     "sec4_sub": "💡 *Standardized scoring rubrics generated based on competency models for consistency.*",
-    "probe_q": "🗣️ Question:",
-    "rubric_5": "🟢 5 pts (Excellent):",
-    "rubric_3": "🟡 3 pts (Acceptable):",
-    "rubric_1": "🔴 1 pt (Poor):",
+    "probe_q": "🗣️ Behavioral Question (STAR):",
+    "rubric_5": "🟢 5 pts (Excellent - BARS):",
+    "rubric_3": "🟡 3 pts (Acceptable - BARS):",
+    "rubric_1": "🔴 1 pt (Poor - BARS):",
     "sec5_title": "🤝 5. Human-in-the-Loop Re-eval",
     "feedback_ph": "Enter HR screening notes for this specific candidate...",
     "re_eval_btn": "🔄 Update Evaluation for this Candidate",
@@ -254,19 +258,31 @@ def robust_json_parse(raw_text):
     except Exception as e:
         raise ValueError("JSON Parsing Failed") from e
 
-# 💡 真正全動態、通用且專業的 HR Prompt
+# 💡 終極融入 5 大中西 HR 招聘理論與架構的 Prompt
 def build_evaluation_prompt(lang, is_ref, urgency, special, jd, cv, feedback=""):
     lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文), using senior executive HR advisory terminology (Korn Ferry / Spencer Stuart style)." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English, using McKinsey/Korn Ferry level advisory tone."
     referral_instruction = "This candidate is an INTERNAL REFERRAL. Apply referral weighting." if is_ref else ""
     feedback_prompt = f"\n\n### HR Human-in-the-Loop Feedback for this candidate:\n{feedback}\n(Integrate this human insight into your strategic assessment.)" if feedback.strip() else ""
     
     return f"""
-You are a Senior Executive HR Consultant and Board-Level Talent Advisor evaluating a candidate for a specific corporate role.
+You are an Elite Executive Search Consultant and Board-Level HR Advisor applying rigorous Global HR Science and Talent Acquisition Principles (Korn Ferry Competency Model, Hay Group Iceberg Model, McKinsey MECE Principle, and STAR/BARS Interview Frameworks).
 
-DYNAMIC & PROFESSIONAL HR AUDIT RULES:
-1. DYNAMIC JD ALIGNMENT: Dynamically extract core responsibilities, key domain/industry background, and explicit requirements (e.g., specific software, travel readiness, licenses, or languages) ONLY as stated in the provided JD. Do NOT invent or hardcode requirements not present in the JD.
-2. ROLE-APPROPRIATE SCOPING: Tailor evaluation metrics strictly to the target seniority and function. For instance, do NOT penalize non-executive or administrative roles for missing executive metrics (like P&L ownership or sales targets) unless explicitly demanded by the JD.
-3. EVIDENCE-BASED ANALYSIS: Cite concrete metrics, company names, project scale, or certifications directly from the candidate's CV to justify every match or gap. Avoid generic, fluffy statements.
+CORE HR SCIENCE AUDIT RULES:
+1. TENURE CALCULATION & MATHEMATICAL RIGOR (MECE Principle):
+   - You MUST accurately sum up the candidate's total years of experience across ALL positions in the CV.
+   - Do NOT miscalculate employment years. Verify dates carefully before flagging "lack of experience".
+
+2. ICEBERG MODEL & FULL-TEXT DEEP SCAN (Knowledge, Skills vs. Attributes):
+   - Perform a full-text scan of the entire CV, including "Professional Qualifications", "Certifications", "Licenses" (e.g. Construction Worker Registration Card, Insurance Intermediaries, Safety Cards), and "Other Skills".
+   - Match hard skills directly required in the JD (e.g. Industry experience, licenses, languages, travel readiness) against the FULL CV text, not just Job Titles.
+
+3. NUANCED RISK ASSESSMENT (Job-Fit vs. Org-Fit):
+   - Differentiate between a Junior candidate who needs training vs. a Senior/Managerial candidate who is OVERQUALIFIED or taking a salary adjustment (e.g., due to company closure/emigration).
+   - Do NOT penalize non-executive or administrative roles for lacking C-suite metrics (like P&L ownership or revenue targets) unless explicitly demanded in the JD.
+
+4. STAR & BARS INTERVIEW RUBRICS (Behaviorally Anchored Rating Scales):
+   - Structure interview questions using the STAR framework.
+   - Rubrics (1-3-5 points) MUST provide specific, behavioral response indicators anchored to real scenario evidence from the CV or core JD challenges, avoiding generic fluff like "gives good examples".
 
 Language Requirement:
 {lang_instruction}
@@ -282,37 +298,37 @@ Format your output STRICTLY in valid JSON matching this schema:
   "funnel_and_ats": {{
     "competency_overall_score": 85,
     "ats_match_percentage": 75,
-    "matched_keywords": ["Exact hard skills and domains matched directly from JD"],
+    "matched_keywords": ["Explicit hard skills, licenses, and domains matched directly from JD or full CV text"],
     "missing_keywords": ["Genuine gap keywords explicitly requested in JD"],
-    "funnel_recommendation": "Strategic HR Verdict: Concise 2-sentence summary outlining key value proposition and primary interview probe focus.",
+    "funnel_recommendation": "Executive Recruiter Verdict: Concise 2-sentence summary outlining key value proposition and primary interview probe focus.",
     "time_to_fill_assessment": "Notice period and availability assessment based on CV data."
   }},
   "competency_breakdown": [
     {{
-      "dimension": "Core Domain Expertise & Execution",
+      "dimension": "Surface Competencies (Hard Skills, Domain & Qualifications)",
       "score": "85/100",
-      "justification": "Detailed executive analysis referencing specific company names, tenure, and achievements relevant to JD.",
+      "justification": "Analytical justification citing exact total years of experience, specific licenses, certifications, and technical proficiencies from CV.",
       "evidence": "Direct quote or metric from CV"
     }},
     {{
-      "dimension": "Role Fit & Special Requirements Alignment",
+      "dimension": "Core Leadership, Governance & Execution (Under the Iceberg)",
       "score": "90/100",
-      "justification": "Evaluation of explicit JD requirements (e.g., specialized skills, language, travel capability, or industry background if stated).",
+      "justification": "Evaluation of managing up, stakeholder liaison, team management, or complex problem-solving capabilities.",
       "evidence": "Direct quote or metric from CV"
     }}
   ],
   "dei_and_risks": {{
-    "dei_safeguard_applied": "Specific HR compliance audit note on how bias (ageism, pedigree bias) was actively mitigated.",
-    "hard_risks": ["Real, job-critical compliance or skill blockers directly required by JD"],
-    "soft_risks": ["Nuanced onboarding considerations or transition focus areas"]
+    "dei_safeguard_applied": "Specific HR compliance audit note on how pedigree bias or ageism was actively mitigated.",
+    "hard_risks": ["Real, job-critical compliance blockers directly requested in JD"],
+    "soft_risks": ["Nuanced HR observations (e.g., overqualification, flight risk, salary adjustment, or team transition)"]
   }},
   "structured_interview_rubric": [
     {{
       "competency_tested": "Specific competency critical to this role",
-      "star_question": "A sharp, practical behavioral probe tailored to the role's challenges.",
-      "rubric_5_excellent": "Outcome-driven, strategic response pattern",
-      "rubric_3_acceptable": "Functional, competent response pattern",
-      "rubric_1_poor": "Red flag response pattern showing key skill deficit"
+      "star_question": "A sharp, behavioral STAR question probing specific CV claims or JD challenges.",
+      "rubric_5_excellent": "BARS 5-pt: Strategic, outcome-driven behavioral pattern with concrete evidence",
+      "rubric_3_acceptable": "BARS 3-pt: Functional, instruction-following behavioral pattern",
+      "rubric_1_poor": "BARS 1-pt: Red flag behavioral pattern indicating key skill deficit or poor judgment"
     }}
   ]
 }}
@@ -344,7 +360,7 @@ def run_ai_analysis(provider, api_key, prompt):
                 client = OpenAI(base_url=cfg["url"], api_key=api_key)
                 response = client.chat.completions.create(
                     model=cfg["model"],
-                    messages=[{"role": "system", "content": "You are a Senior Executive HR Consultant outputting raw JSON."}, {"role": "user", "content": prompt}],
+                    messages=[{"role": "system", "content": "You are a Board-Level HR Advisor outputting raw JSON."}, {"role": "user", "content": prompt}],
                     temperature=0.1,
                     response_format={"type": "json_object"}
                 )
