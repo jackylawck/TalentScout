@@ -3,6 +3,7 @@ import pypdf
 import docx
 import json
 import re
+import time
 from openai import OpenAI
 from google import genai
 from google.genai import types
@@ -17,7 +18,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# 初始化各候選人的獨立分析狀態與反饋歷史
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 if 'analysis_results' not in st.session_state:
@@ -25,7 +25,8 @@ if 'analysis_results' not in st.session_state:
 if 'hr_feedback_history' not in st.session_state:
     st.session_state.hr_feedback_history = {} 
 
-default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API_KEY", "")
+token_github = st.secrets.get("GITHUB_TOKEN", "")
+token_gemini = st.secrets.get("GEMINI_API_KEY", "")
 
 # ==========================================
 # 2. Localization Dictionaries (語系解耦)
@@ -33,10 +34,11 @@ default_token = st.secrets.get("GITHUB_TOKEN", "") or st.secrets.get("GEMINI_API
 UI_ZH = {
     "sys_config": "⚙️ 系統設定",
     "key_mode": "選擇 AI 金鑰模式：",
-    "default_key": "使用開源公共免費額度",
-    "byok_key": "使用自備 AI API Key (無限制)",
-    "loaded_default": "🌱 **開源公共資源已載入 (10次/Session)**。歡迎自由體驗！若需高頻批量篩選或處理高度機密履歷，建議切換為自備 Key 以確保最高安全性與不限次數體驗。",
+    "default_key": "使用開源公共免費額度 (單次 1 份 CV)",
+    "byok_key": "使用自備 AI API Key (支援多 CV 批量)",
+    "loaded_default": "🌱 **開源公共資源已載入 (10次/Session)**。免費模式下**每次限上傳 1 份 CV** 以確保順暢體驗。若需批量評估多份履歷，歡迎切換為自備 Key！",
     "quota_exceeded": "🤝 **本 Session 試用額度已達上限。** 請刷新網頁（F5）或切換至『使用自備 AI API Key』繼續使用！",
+    "single_cv_notice": "💡 **免費試用提示：** 開源免費額度每次限解析 **1 份 CV**。如需一次批量解析多份履歷，請於左側切換為「使用自備 AI API Key」。",
     "select_provider": "選擇 AI 供應商：",
     "enter_key": "輸入你的 {} Key",
     "framework_title": "🛡️ 數據安全與進階 HR 管治特色",
@@ -44,9 +46,9 @@ UI_ZH = {
     **🔐 企業隱私防護:**
     - **零數據留存:** 運算僅存於本地 Session 記憶體，重整即刻物理銷毀。
     **🎯 進階 HR Tech 引擎:**
-    - **多 CV 獨立解析 (Tabbed UI):** 批量上傳，獨立分頁精準生成決策報告。
-    - **深度 DEI 詞彙偵測:** 具體揪出年齡、性別等潛在偏見字眼並提供修正。
-    - **決策報告一鍵匯出:** 支援將 AI 分析結果匯出為 Markdown 報告。
+    - **多 CV 獨立解析 (BYOK 模式):** 批量上傳，獨立分頁精準生成決策報告。
+    - **深度 DEI 詞彙偵測:** 具體揪出潛在偏見字眼並提供修正。
+    - **決策報告一鍵匯出:** 支援將分析結果匯出為 Markdown。
     """,
     "title": "🎯 慧聘 · 智析官 (TalentScout AI)",
     "subtitle": "🚀 **企業級 ATS 智慧初篩、勝任力評估與多元包容 (DEI) 管治系統**",
@@ -56,7 +58,7 @@ UI_ZH = {
     "jd_ph": "請貼上 JD 內容，包含職責與資格等...",
     "upload_jd_lbl": "上傳 JD 檔案 (PDF, DOCX, 限 15MB 內)",
     "col2_title": "👤 2. 求職者履歷 (CV)",
-    "upload_cv_lbl": "上傳 CV 檔案 (可多選，獨立生成報告)",
+    "upload_cv_lbl": "上傳 CV 檔案 (免費額度限 1 檔，BYOK 可多選)",
     "col3_title": "🎯 3. 招聘情境與設定",
     "referral_lbl": "🎖️ 此批次包含內部員工推薦",
     "urgency_lbl": "⏳ 職位招聘急迫性",
@@ -66,7 +68,7 @@ UI_ZH = {
     "run_btn": "🚀 啟動多維度 ATS 解析與結構化評估",
     "status_analyzing": "🚀 正在獨立解析候選人：{}",
     "err_json": "❌ AI 回傳格式解析失敗。請嘗試重新執行。",
-    "err_api": "❌ API 呼叫失敗或超時，請檢查連線狀態或 API Key 權限。",
+    "err_api": "❌ API 呼叫失敗。請檢查 API Key 或網路連線。",
     "sec1_title": "📊 1. 漏斗決策與 ATS 匹配度",
     "m_score": "綜合勝任力得分",
     "m_ats": "ATS 關鍵字匹配率",
@@ -89,16 +91,17 @@ UI_ZH = {
     "sec5_title": "🤝 5. HR 漏斗覆核與動態校正 (HITL)",
     "feedback_ph": "輸入針對此候選人的初篩結果或補充觀察...",
     "re_eval_btn": "🔄 結合 HR 反饋重新校正此候選人模型",
-    "download_btn": "📥 下載此候選人評估報告 (Markdown)"
+    "download_btn": "📥 下載評估報告 (Markdown)"
 }
 
 UI_EN = {
     "sys_config": "⚙️ System Config",
     "key_mode": "Select AI Key Mode:",
-    "default_key": "Use Open-Source Public Quota",
-    "byok_key": "Use Custom API Key (Unlimited)",
-    "loaded_default": "🌱 **Public Quota Loaded (10 uses/session).** For high-frequency or highly confidential CV processing, BYOK is strongly recommended for maximum security.",
+    "default_key": "Use Open-Source Public Quota (1 CV max)",
+    "byok_key": "Use Custom API Key (Batch CVs enabled)",
+    "loaded_default": "🌱 **Public Quota Loaded (10 uses/session).** Free mode is limited to **1 CV per run**. Switch to BYOK for unlimited batch evaluation!",
     "quota_exceeded": "🤝 **Quota Reached!** Please refresh page or switch to 'Custom Key' to continue.",
+    "single_cv_notice": "💡 **Free Quota Notice:** Public quota processes **1 CV per run**. Switch to 'Custom Key' in sidebar for multi-CV batch processing.",
     "select_provider": "Select AI Provider:",
     "enter_key": "Enter your {} Key",
     "framework_title": "🛡️ Privacy & AI Governance",
@@ -106,8 +109,8 @@ UI_EN = {
     **🔐 Enterprise Privacy Guarantee:**
     - **Zero Retention:** Processed strictly in-memory per session.
     **🎯 Advanced HR Tech Engine:**
-    - **Isolated Multi-CV Tabs:** Process batch uploads with independent evaluation tabs.
-    - **Deep DEI Auditing:** Explicitly flags biased terminology (age, gender, origin).
+    - **Isolated Multi-CV Tabs (BYOK Mode):** Process batch uploads with independent tabs.
+    - **Deep DEI Auditing:** Explicitly flags biased terminology.
     - **One-Click Export:** Download full assessment reports in Markdown.
     """,
     "title": "🎯 TalentScout AI",
@@ -118,7 +121,7 @@ UI_EN = {
     "jd_ph": "Paste JD content here including duties, requirements...",
     "upload_jd_lbl": "Upload JD Files (PDF, DOCX, Max 15MB)",
     "col2_title": "👤 2. Candidate Resumes (CV)",
-    "upload_cv_lbl": "Upload CV Files (Multiple files for batch tabs)",
+    "upload_cv_lbl": "Upload CV Files (Max 1 in Free Mode, Batch in BYOK)",
     "col3_title": "🎯 3. Hiring Context",
     "referral_lbl": "🎖️ Internal Referral Batch",
     "urgency_lbl": "⏳ Time-to-Fill Urgency",
@@ -163,27 +166,31 @@ def get_ui(key, default=""):
     return (UI_ZH if is_zh else UI_EN).get(key, default)
 
 # ==========================================
-# 3. Sidebar Config (Public Quota + BYOK)
+# 3. Sidebar Config (Smart Provider Routing)
 # ==========================================
 AI_PROVIDERS = {
-    "OpenAI": {"url": "[https://api.openai.com/v1](https://api.openai.com/v1)", "model": "gpt-4o-mini"},
-    "DeepSeek": {"url": "[https://api.deepseek.com](https://api.deepseek.com)", "model": "deepseek-chat"},
-    "Groq": {"url": "[https://api.groq.com/openai/v1](https://api.groq.com/openai/v1)", "model": "llama-3.3-70b-versatile"},
-    "Google Gemini": {"url": "N/A", "model": "gemini-2.5-flash"},
-    "GitHub Models": {"url": "[https://models.inference.ai.azure.com](https://models.inference.ai.azure.com)", "model": "gpt-4o-mini"}
+    "GitHub Models": {"url": "https://models.inference.ai.azure.com", "model": "gpt-4o-mini"},
+    "OpenAI": {"url": "https://api.openai.com/v1", "model": "gpt-4o-mini"},
+    "DeepSeek": {"url": "https://api.deepseek.com", "model": "deepseek-chat"},
+    "Groq": {"url": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile"},
+    "Google Gemini": {"url": "N/A", "model": "gemini-2.5-flash"}
 }
 
 with st.sidebar:
     st.header(get_ui("sys_config"))
-    if default_token:
+    if token_github or token_gemini:
         key_mode = st.radio(get_ui("key_mode"), [get_ui("default_key"), get_ui("byok_key")], index=0)
     else:
         key_mode = get_ui("byok_key")
 
     if key_mode == get_ui("default_key"):
-        provider = "GitHub Models"
-        api_key = default_token
-        st.info(get_ui("loaded_default"))
+        if token_github:
+            provider = "GitHub Models"
+            api_key = token_github
+        else:
+            provider = "Google Gemini"
+            api_key = token_gemini
+        st.info(get_ui("loaded_default") + f"\n\n*(Current Engine: **{provider}**)*")
     else:
         provider = st.selectbox(get_ui("select_provider"), list(AI_PROVIDERS.keys()))
         api_key = st.text_input(get_ui("enter_key").format(provider), type="password")
@@ -222,7 +229,6 @@ def extract_text_from_files(uploaded_files):
     if not isinstance(uploaded_files, list): uploaded_files = [uploaded_files]
     return "\n".join([extract_single_file(f) for f in uploaded_files])
 
-# 智能擷取分頁名稱 (去除副檔名與職稱，只保留人名)
 def format_tab_name(filename):
     clean = re.sub(r'(?i)(\.pdf|\.docx|\.doc)', '', filename)
     clean = re.sub(r'(?i)(resume|cv|profile|履歷).*', '', clean).strip()
@@ -238,7 +244,6 @@ def format_tab_name(filename):
         return " ".join(words[:4]) + "..." if len(words) > 4 else clean
     return clean
 
-# 修復：改用雙引號避免 SyntaxError
 def robust_json_parse(raw_text):
     try:
         match = re.search(r"```(?:json)?\s*(.*?)\s*```", raw_text, re.DOTALL | re.IGNORECASE)
@@ -249,15 +254,14 @@ def robust_json_parse(raw_text):
     except Exception as e:
         raise ValueError("JSON Parsing Failed") from e
 
-# 注入高階 HR 顧問語氣 (Korn Ferry / McKinsey 級別)
 def build_evaluation_prompt(lang, is_ref, urgency, special, jd, cv, feedback=""):
-    lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文), using senior executive HR and board-level advisory terminology." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English, using McKinsey/Korn Ferry level advisory tone."
+    lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文), using senior executive HR terminology." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English."
     referral_instruction = "This candidate is an INTERNAL REFERRAL. Apply referral weighting." if is_ref else ""
     feedback_prompt = f"\n\n### HR Human-in-the-Loop Feedback for this candidate:\n{feedback}\n(Integrate this human insight into your strategic assessment.)" if feedback.strip() else ""
     
     return f"""
 You are a Senior Executive HR Consultant and Board-Level Talent Advisor. Evaluate this SINGLE candidate against the JD using advanced Competency Modeling, ATS Extraction, DEI Safeguards, and Structured Interview Rubrics. 
-Your tone MUST be highly professional, analytical, and strategic (avoid generic or robotic summaries).
+Your tone MUST be highly professional, analytical, and strategic.
 
 Language Requirement:
 {lang_instruction}
@@ -275,19 +279,19 @@ Format your output STRICTLY in valid JSON matching this schema:
     "ats_match_percentage": 75,
     "matched_keywords": ["Strategic Planning", "Stakeholder Management"],
     "missing_keywords": ["P&L Management"],
-    "funnel_recommendation": "Executive summary of next steps (e.g., 'Strongly recommend for MD interview due to high strategic fit, despite minor gap in X').",
+    "funnel_recommendation": "Executive summary of next steps.",
     "time_to_fill_assessment": "Strategic risk assessment of onboarding timeline."
   }},
   "competency_breakdown": [
     {{
       "dimension": "e.g., Strategic Execution & Leadership",
       "score": "80/100",
-      "justification": "Deep analytical justification using executive HR terminology, explicitly citing evidence rather than generic descriptions.",
+      "justification": "Deep analytical justification using executive HR terminology, explicitly citing evidence.",
       "evidence": "Direct quote or specific metric from CV"
     }}
   ],
   "dei_and_risks": {{
-    "dei_safeguard_applied": "Specific executive audit note on how bias (e.g., ageism, pedigree bias) was actively mitigated.",
+    "dei_safeguard_applied": "Specific executive audit note on how bias was actively mitigated.",
     "hard_risks": ["Critical compliance or hard-skill blockers"],
     "soft_risks": ["Nuanced behavioral or cultural fit observation points"]
   }},
@@ -313,23 +317,32 @@ Candidate CV:
 
 def run_ai_analysis(provider, api_key, prompt):
     cfg = AI_PROVIDERS[provider]
-    if provider == "Google Gemini":
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model=cfg["model"], 
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
-        )
-        return response.text
-    else:
-        client = OpenAI(base_url=cfg["url"], api_key=api_key)
-        response = client.chat.completions.create(
-            model=cfg["model"],
-            messages=[{"role": "system", "content": "You are a Senior Executive HR Consultant outputting raw JSON."}, {"role": "user", "content": prompt}],
-            temperature=0.1,
-            response_format={"type": "json_object"}
-        )
-        return response.choices[0].message.content.strip()
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            if provider == "Google Gemini":
+                client = genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model=cfg["model"], 
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
+                )
+                return response.text
+            else:
+                client = OpenAI(base_url=cfg["url"], api_key=api_key)
+                response = client.chat.completions.create(
+                    model=cfg["model"],
+                    messages=[{"role": "system", "content": "You are a Senior Executive HR Consultant outputting raw JSON."}, {"role": "user", "content": prompt}],
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+                return response.choices[0].message.content.strip()
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(3)
+            else:
+                raise e
 
 def generate_markdown_report(cand_name, data):
     funnel = data.get('funnel_and_ats', {})
@@ -385,7 +398,7 @@ st.markdown("---")
 # 6. Execution Engine (Tabbed Processing)
 # ==========================================
 def process_single_candidate(cand_name, cv_content, hr_feedback=""):
-    MAX_CHARS = 80000 
+    MAX_CHARS = 40000 
     curr_jd, curr_cv = jd_text[:MAX_CHARS//2], cv_content[:MAX_CHARS//2]
     
     with st.status(get_ui("status_analyzing").format(format_tab_name(cand_name)), expanded=True) as status:
@@ -397,7 +410,7 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
             return parsed_data
         except Exception as e:
             status.update(label=f"❌ {format_tab_name(cand_name)} 分析失敗", state="error")
-            st.error(get_ui("err_api") if "API" in str(e) else get_ui("err_json"))
+            st.error(f"**除錯訊息:**\n`{str(e)}`")
             print(f"[DEBUG - {cand_name}] {traceback.format_exc()}")
             return None
 
@@ -405,12 +418,21 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
 if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
     if not api_key or not jd_text.strip() or not cv_files:
         st.warning("⚠️ 請確認已輸入 API Key、JD 並上傳至少一份 CV。")
+    elif key_mode == get_ui("default_key") and len(cv_files) > 1:
+        # 💡 核心優化：免費模式下若上傳多於 1 份 CV，彈出明確提示
+        st.warning(get_ui("single_cv_notice"))
     else:
         check_quota()
         st.session_state.analysis_results = {}
         st.session_state.hr_feedback_history = {}
         
-        for cv_file in cv_files:
+        # 免費模式強制唯一下標 0，BYOK 模式支援完整迴圈
+        files_to_process = [cv_files[0]] if key_mode == get_ui("default_key") else cv_files
+        
+        for idx, cv_file in enumerate(files_to_process):
+            if idx > 0:
+                time.sleep(3.0) 
+                
             cand_name = cv_file.name
             cv_content = extract_single_file(cv_file)
             result = process_single_candidate(cand_name, cv_content)
