@@ -254,14 +254,19 @@ def robust_json_parse(raw_text):
     except Exception as e:
         raise ValueError("JSON Parsing Failed") from e
 
+# 💡 大幅升級：資深 HR Director 級別的 Prompt
 def build_evaluation_prompt(lang, is_ref, urgency, special, jd, cv, feedback=""):
-    lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文), using senior executive HR terminology." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English."
+    lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文), using senior executive HR advisory terminology (Korn Ferry / Spencer Stuart style)." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English, using McKinsey/Korn Ferry level advisory tone."
     referral_instruction = "This candidate is an INTERNAL REFERRAL. Apply referral weighting." if is_ref else ""
     feedback_prompt = f"\n\n### HR Human-in-the-Loop Feedback for this candidate:\n{feedback}\n(Integrate this human insight into your strategic assessment.)" if feedback.strip() else ""
     
     return f"""
-You are a Senior Executive HR Consultant and Board-Level Talent Advisor. Evaluate this SINGLE candidate against the JD using advanced Competency Modeling, ATS Extraction, DEI Safeguards, and Structured Interview Rubrics. 
-Your tone MUST be highly professional, analytical, and strategic.
+You are a Senior Executive HR Consultant and Board-Level Talent Advisor evaluating a candidate for an Executive Assistant (EA) / Personal Assistant (PA) to Managing Director / C-Suite role.
+
+CRITICAL HR AUDIT RULES:
+1. ROLE APPROPRIATENESS: Do NOT penalty EA/PA candidates for missing C-suite responsibilities like "P&L Management" or "Sales Target" unless explicitly required in the JD. Focus strictly on Executive Support, Stakeholder Liaison, Travel/Calendar Logistics, Project Coordination, Commercial Acumen, and Confidentiality.
+2. INDUSTRY & SPECIAL REQUIREMENT MATCHING: Explicitly cross-check for industry-specific advantages stated in JD (e.g., Construction/Engineering background) and mobility requirements (e.g., Mainland China travel/coordination). Citing concrete evidence from CV.
+3. EXECUTIVE TONEOF VOICE: Avoid generic fluff (e.g., "candidate has good experience"). Use precise talent acquisition terminology with specific metrics and tenure evidence.
 
 Language Requirement:
 {lang_instruction}
@@ -277,31 +282,37 @@ Format your output STRICTLY in valid JSON matching this schema:
   "funnel_and_ats": {{
     "competency_overall_score": 85,
     "ats_match_percentage": 75,
-    "matched_keywords": ["Strategic Planning", "Stakeholder Management"],
-    "missing_keywords": ["P&L Management"],
-    "funnel_recommendation": "Executive summary of next steps.",
-    "time_to_fill_assessment": "Strategic risk assessment of onboarding timeline."
+    "matched_keywords": ["Exact hard skills matched from JD"],
+    "missing_keywords": ["Real gaps directly required by JD"],
+    "funnel_recommendation": "Strategic HR Verdict: Concise 2-sentence summary outlining key value proposition and primary interview probe focus.",
+    "time_to_fill_assessment": "Notice period and availability assessment based on CV data."
   }},
   "competency_breakdown": [
     {{
-      "dimension": "e.g., Strategic Execution & Leadership",
-      "score": "80/100",
-      "justification": "Deep analytical justification using executive HR terminology, explicitly citing evidence.",
-      "evidence": "Direct quote or specific metric from CV"
+      "dimension": "Executive Support & Operations",
+      "score": "85/100",
+      "justification": "Detailed executive analysis citing specific company names, tenure, and high-level support achievements.",
+      "evidence": "Direct quote or metric from CV"
+    }},
+    {{
+      "dimension": "Industry Alignment & Strategic Mobility",
+      "score": "90/100",
+      "justification": "Evaluation of construction/engineering background, cross-border liaison, and language proficiency.",
+      "evidence": "Direct quote or metric from CV"
     }}
   ],
   "dei_and_risks": {{
-    "dei_safeguard_applied": "Specific executive audit note on how bias was actively mitigated.",
-    "hard_risks": ["Critical compliance or hard-skill blockers"],
-    "soft_risks": ["Nuanced behavioral or cultural fit observation points"]
+    "dei_safeguard_applied": "Specific HR compliance audit note on how ageism or pedigree bias was mitigated.",
+    "hard_risks": ["Real, job-critical compliance blockers (e.g. lacking mandatory language or license stated in JD)"],
+    "soft_risks": ["Transition considerations (e.g., moving from operational assistant to strategic EA)"]
   }},
   "structured_interview_rubric": [
     {{
-      "competency_tested": "Specific executive competency",
-      "star_question": "Challenging, senior-level behavioral question",
-      "rubric_5_excellent": "Strategic, outcome-driven response pattern",
-      "rubric_3_acceptable": "Tactical but functional response pattern",
-      "rubric_1_poor": "Red flag response indicating poor judgment or lack of scale"
+      "competency_tested": "Executive Discretion & Managing Up",
+      "star_question": "A sharp behavioral probe tailored to the Managing Director's fast-paced environment.",
+      "rubric_5_excellent": "High-level strategic alignment, proactive crisis management, and flawless discretion.",
+      "rubric_3_acceptable": "Competent execution of instructions with basic stakeholder management.",
+      "rubric_1_poor": "Red flag response indicating poor judgment or lack of scale."
     }}
   ]
 }}
@@ -419,14 +430,12 @@ if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
     if not api_key or not jd_text.strip() or not cv_files:
         st.warning("⚠️ 請確認已輸入 API Key、JD 並上傳至少一份 CV。")
     elif key_mode == get_ui("default_key") and len(cv_files) > 1:
-        # 💡 核心優化：免費模式下若上傳多於 1 份 CV，彈出明確提示
         st.warning(get_ui("single_cv_notice"))
     else:
         check_quota()
         st.session_state.analysis_results = {}
         st.session_state.hr_feedback_history = {}
         
-        # 免費模式強制唯一下標 0，BYOK 模式支援完整迴圈
         files_to_process = [cv_files[0]] if key_mode == get_ui("default_key") else cv_files
         
         for idx, cv_file in enumerate(files_to_process):
@@ -493,6 +502,7 @@ if st.session_state.analysis_results:
                 for q in data.get('structured_interview_rubric', []):
                     st.markdown(f"**{get_ui('probe_q')}** {q.get('star_question', '')}")
                     st.success(f"**{get_ui('rubric_5')}** {q.get('rubric_5_excellent', '')}")
+                    st.warning(f"**{get_ui('rubric_3')}** {q.get('rubric_3_acceptable', '')}")
                     st.error(f"**{get_ui('rubric_1')}** {q.get('rubric_1_poor', '')}")
                     st.markdown("---")
 
