@@ -81,6 +81,7 @@ UI_ZH = {
     "hard_risks": "🚨 絕對風險/合規死線:",
     "soft_risks": "⚠️ 軟性風險/面試觀察點:",
     "sec4_title": "🎯 4. 結構化面試量表 (STAR)",
+    "sec4_sub": "💡 *基於勝任力模型生成之標準化評分題庫，確保面試官評分一致性。*",
     "probe_q": "🗣️ 面試題:",
     "rubric_5": "🟢 5分 (優秀):",
     "rubric_3": "🟡 3分 (合格):",
@@ -142,6 +143,7 @@ UI_EN = {
     "hard_risks": "🚨 Hard Risks / Compliance Blocks:",
     "soft_risks": "⚠️ Soft Risks / Interview Focus:",
     "sec4_title": "🎯 4. Structured Interview Rubric (STAR)",
+    "sec4_sub": "💡 *Standardized scoring rubrics generated based on competency models for consistency.*",
     "probe_q": "🗣️ Question:",
     "rubric_5": "🟢 5 pts (Excellent):",
     "rubric_3": "🟡 3 pts (Acceptable):",
@@ -159,6 +161,10 @@ with st.sidebar:
 is_zh = output_lang == "繁體中文 (Traditional Chinese)"
 ui = UI_ZH if is_zh else UI_EN
 
+# Helper 功能：安全獲取字典鍵值，避免 KeyError
+def get_ui(key, default=""):
+    return ui.get(key, default)
+
 # ==========================================
 # 3. Sidebar Config (Public Quota + BYOK)
 # ==========================================
@@ -171,28 +177,28 @@ AI_PROVIDERS = {
 }
 
 with st.sidebar:
-    st.header(ui["sys_config"])
+    st.header(get_ui("sys_config"))
     if default_token:
-        key_mode = st.radio(ui["key_mode"], [ui["default_key"], ui["byok_key"]], index=0)
+        key_mode = st.radio(get_ui("key_mode"), [get_ui("default_key"), get_ui("byok_key")], index=0)
     else:
-        key_mode = ui["byok_key"]
+        key_mode = get_ui("byok_key")
 
-    if key_mode == ui["default_key"]:
+    if key_mode == get_ui("default_key"):
         provider = "GitHub Models"
         api_key = default_token
-        st.info(ui["loaded_default"])
+        st.info(get_ui("loaded_default"))
     else:
-        provider = st.selectbox(ui["select_provider"], list(AI_PROVIDERS.keys()))
-        api_key = st.text_input(ui["enter_key"].format(provider), type="password")
+        provider = st.selectbox(get_ui("select_provider"), list(AI_PROVIDERS.keys()))
+        api_key = st.text_input(get_ui("enter_key").format(provider), type="password")
     
     st.divider()
-    st.markdown(ui["framework_title"])
-    st.markdown(ui["framework_body"])
+    st.markdown(get_ui("framework_title"))
+    st.markdown(get_ui("framework_body"))
 
 def check_quota():
-    if key_mode == ui["default_key"]:
+    if key_mode == get_ui("default_key"):
         if st.session_state.usage_count >= 10:
-            st.error(ui["quota_exceeded"])
+            st.error(get_ui("quota_exceeded"))
             st.stop()
         st.session_state.usage_count += 1
 
@@ -308,49 +314,49 @@ def generate_markdown_report(cand_name, data):
     funnel = data.get('funnel_and_ats', {})
     dei = data.get('dei_and_risks', {})
     md = f"# TalentScout Assessment Report: {cand_name}\n\n"
-    md += f"## {ui['sec1_title']}\n"
-    md += f"- **{ui['m_score']}:** {funnel.get('competency_overall_score', 'N/A')}/100\n"
-    md += f"- **{ui['m_ats']}:** {funnel.get('ats_match_percentage', 'N/A')}%\n"
-    md += f"- **{ui['m_rec']}:** {funnel.get('funnel_recommendation', 'N/A')}\n"
-    md += f"- **{ui['ats_matched']}** {', '.join(funnel.get('matched_keywords', []))}\n"
-    md += f"- **{ui['ats_missing']}** {', '.join(funnel.get('missing_keywords', []))}\n\n"
+    md += f"## {get_ui('sec1_title')}\n"
+    md += f"- **{get_ui('m_score')}:** {funnel.get('competency_overall_score', 'N/A')}/100\n"
+    md += f"- **{get_ui('m_ats')}:** {funnel.get('ats_match_percentage', 'N/A')}%\n"
+    md += f"- **{get_ui('m_rec')}:** {funnel.get('funnel_recommendation', 'N/A')}\n"
+    md += f"- **{get_ui('ats_matched')}** {', '.join(funnel.get('matched_keywords', []))}\n"
+    md += f"- **{get_ui('ats_missing')}** {', '.join(funnel.get('missing_keywords', []))}\n\n"
     
-    md += f"## {ui['sec2_title']}\n"
+    md += f"## {get_ui('sec2_title')}\n"
     for item in data.get('competency_breakdown', []):
         md += f"### {item.get('dimension', 'N/A')} - Score: {item.get('score', 'N/A')}\n"
         md += f"> {item.get('justification', '')} *(Evidence: {item.get('evidence', '')})*\n\n"
         
-    md += f"## {ui['sec3_title']}\n"
-    md += f"- **{ui['dei_check']}** {dei.get('dei_safeguard_applied', 'N/A')}\n"
-    md += f"- **{ui['hard_risks']}** {', '.join(dei.get('hard_risks', []))}\n"
-    md += f"- **{ui['soft_risks']}** {', '.join(dei.get('soft_risks', []))}\n\n"
+    md += f"## {get_ui('sec3_title')}\n"
+    md += f"- **{get_ui('dei_check')}** {dei.get('dei_safeguard_applied', 'N/A')}\n"
+    md += f"- **{get_ui('hard_risks')}** {', '.join(dei.get('hard_risks', []))}\n"
+    md += f"- **{get_ui('soft_risks')}** {', '.join(dei.get('soft_risks', []))}\n\n"
     return md
 
 # ==========================================
 # 5. Main UI Layout
 # ==========================================
-st.title(ui["title"])
-st.caption(ui["subtitle"])
+st.title(get_ui("title"))
+st.caption(get_ui("subtitle"))
 
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
-    st.subheader(ui["col1_title"])
-    jd_input_type = st.radio(ui["input_mode_lbl"], ui["input_modes"], horizontal=True, key="jd_mode")
+    st.subheader(get_ui("col1_title"))
+    jd_input_type = st.radio(get_ui("input_mode_lbl"), get_ui("input_modes"), horizontal=True, key="jd_mode")
     if jd_input_type in ["貼上文字", "Paste Text"]:
-        jd_text = st.text_area("JD 內容", height=200, placeholder=ui["jd_ph"], label_visibility="collapsed")
+        jd_text = st.text_area("JD 內容", height=200, placeholder=get_ui("jd_ph"), label_visibility="collapsed")
     else:
-        jd_files = st.file_uploader(ui["upload_jd_lbl"], type=["pdf", "docx", "doc"], accept_multiple_files=True, key="jd_uploader")
+        jd_files = st.file_uploader(get_ui("upload_jd_lbl"), type=["pdf", "docx", "doc"], accept_multiple_files=True, key="jd_uploader")
         jd_text = extract_text_from_files(jd_files)
 
 with col2:
-    st.subheader(ui["col2_title"])
-    cv_files = st.file_uploader(ui["upload_cv_lbl"], type=["pdf", "docx", "doc"], accept_multiple_files=True, key="cv_uploader")
+    st.subheader(get_ui("col2_title"))
+    cv_files = st.file_uploader(get_ui("upload_cv_lbl"), type=["pdf", "docx", "doc"], accept_multiple_files=True, key="cv_uploader")
 
 with col3:
-    st.subheader(ui["col3_title"])
-    is_referral = st.checkbox(ui["referral_lbl"], value=False)
-    urgency_val = st.selectbox(ui["urgency_lbl"], ui["urgency_opts"])
-    special_reqs = st.text_area(ui["special_req_lbl"], height=90, placeholder=ui["special_req_ph"])
+    st.subheader(get_ui("col3_title"))
+    is_referral = st.checkbox(get_ui("referral_lbl"), value=False)
+    urgency_val = st.selectbox(get_ui("urgency_lbl"), get_ui("urgency_opts"))
+    special_reqs = st.text_area(get_ui("special_req_lbl"), height=90, placeholder=get_ui("special_req_ph"))
 
 st.markdown("---")
 
@@ -361,7 +367,7 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
     MAX_CHARS = 80000 
     curr_jd, curr_cv = jd_text[:MAX_CHARS//2], cv_content[:MAX_CHARS//2]
     
-    with st.status(ui["status_analyzing"].format(cand_name), expanded=True) as status:
+    with st.status(get_ui("status_analyzing").format(cand_name), expanded=True) as status:
         try:
             prompt = build_evaluation_prompt(is_zh, is_referral, urgency_val, special_reqs, curr_jd, curr_cv, hr_feedback)
             raw_response = run_ai_analysis(provider, api_key, prompt)
@@ -370,12 +376,12 @@ def process_single_candidate(cand_name, cv_content, hr_feedback=""):
             return parsed_data
         except Exception as e:
             status.update(label=f"❌ {cand_name} 分析失敗", state="error")
-            st.error(ui["err_api"] if "API" in str(e) else ui["err_json"])
+            st.error(get_ui("err_api") if "API" in str(e) else get_ui("err_json"))
             print(f"[DEBUG - {cand_name}] {traceback.format_exc()}")
             return None
 
 # Initial Batch Run
-if st.button(ui["run_btn"], type="primary", use_container_width=True):
+if st.button(get_ui("run_btn"), type="primary", use_container_width=True):
     if not api_key or not jd_text.strip() or not cv_files:
         st.warning("⚠️ 請確認已輸入 API Key、JD 並上傳至少一份 CV。")
     else:
@@ -405,19 +411,19 @@ if st.session_state.analysis_results:
             dei = data.get('dei_and_risks', {})
             
             # Sec 1: Funnel
-            st.markdown(f"### {ui['sec1_title']}")
+            st.markdown(f"### {get_ui('sec1_title')}")
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric(ui["m_score"], f"{funnel.get('competency_overall_score', 'N/A')} / 100")
-            c2.metric(ui["m_ats"], f"{funnel.get('ats_match_percentage', 'N/A')} %")
-            c3.metric(ui["m_rec"], funnel.get('funnel_recommendation', 'N/A'))
-            c4.metric(ui["m_time"], urgency_val.split()[0])
+            c1.metric(get_ui("m_score"), f"{funnel.get('competency_overall_score', 'N/A')} / 100")
+            c2.metric(get_ui("m_ats"), f"{funnel.get('ats_match_percentage', 'N/A')} %")
+            c3.metric(get_ui("m_rec"), funnel.get('funnel_recommendation', 'N/A'))
+            c4.metric(get_ui("m_time"), urgency_val.split()[0])
             
-            st.success(f"**{ui['ats_matched']}** " + ", ".join(funnel.get('matched_keywords', [])))
-            st.error(f"**{ui['ats_missing']}** " + ", ".join(funnel.get('missing_keywords', [])))
+            st.success(f"**{get_ui('ats_matched')}** " + ", ".join(funnel.get('matched_keywords', [])))
+            st.error(f"**{get_ui('ats_missing')}** " + ", ".join(funnel.get('missing_keywords', [])))
             
             # Sec 2: Competency
             st.markdown("---")
-            st.markdown(f"### {ui['sec2_title']}")
+            st.markdown(f"### {get_ui('sec2_title')}")
             comp_data = data.get('competency_breakdown', [])
             if comp_data:
                 sb_cols = st.columns(min(len(comp_data), 3))
@@ -429,36 +435,36 @@ if st.session_state.analysis_results:
             
             # Sec 3: DEI
             st.markdown("---")
-            st.markdown(f"### {ui['sec3_title']}")
-            st.info(f"**{ui['dei_check']}**\n{dei.get('dei_safeguard_applied', 'N/A')}")
+            st.markdown(f"### {get_ui('sec3_title')}")
+            st.info(f"**{get_ui('dei_check')}**\n{dei.get('dei_safeguard_applied', 'N/A')}")
             r1, r2 = st.columns(2)
             with r1:
-                st.error(f"**{ui['hard_risks']}**\n" + "\n".join([f"- {x}" for x in dei.get('hard_risks', ["None"])]))
+                st.error(f"**{get_ui('hard_risks')}**\n" + "\n".join([f"- {x}" for x in dei.get('hard_risks', ["None"])]))
             with r2:
-                st.warning(f"**{ui['soft_risks']}**\n" + "\n".join([f"- {x}" for x in dei.get('soft_risks', ["None"])]))
+                st.warning(f"**{get_ui('soft_risks')}**\n" + "\n".join([f"- {x}" for x in dei.get('soft_risks', ["None"])]))
             
             # Sec 4: Rubric
             st.markdown("---")
-            with st.expander(ui['sec4_title']):
-                st.caption(ui["sec4_sub"])
+            with st.expander(get_ui('sec4_title')):
+                st.caption(get_ui("sec4_sub"))
                 for q in data.get('structured_interview_rubric', []):
-                    st.markdown(f"**{ui['probe_q']}** {q.get('star_question', '')}")
-                    st.success(f"**{ui['rubric_5']}** {q.get('rubric_5_excellent', '')}")
-                    st.error(f"**{ui['rubric_1']}** {q.get('rubric_1_poor', '')}")
+                    st.markdown(f"**{get_ui('probe_q')}** {q.get('star_question', '')}")
+                    st.success(f"**{get_ui('rubric_5')}** {q.get('rubric_5_excellent', '')}")
+                    st.error(f"**{get_ui('rubric_1')}** {q.get('rubric_1_poor', '')}")
                     st.markdown("---")
 
             # Sec 5: HITL Feedback & Export
             st.markdown("---")
-            st.markdown(f"### {ui['sec5_title']}")
+            st.markdown(f"### {get_ui('sec5_title')}")
             for past_fb in st.session_state.hr_feedback_history.get(cand_name, []):
                 st.info(f"👤 **HR Notes:** {past_fb}")
             
             fb_key = f"fb_{cand_name}"
-            new_fb = st.text_area("HR Notes", placeholder=ui["feedback_ph"], key=fb_key, label_visibility="collapsed")
+            new_fb = st.text_area("HR Notes", placeholder=get_ui("feedback_ph"), key=fb_key, label_visibility="collapsed")
             
             col_eval, col_dl = st.columns([1, 1])
             with col_eval:
-                if st.button(ui["re_eval_btn"], key=f"btn_{cand_name}", use_container_width=True):
+                if st.button(get_ui("re_eval_btn"), key=f"btn_{cand_name}", use_container_width=True):
                     if new_fb.strip():
                         check_quota() # 二次校正也計算額度
                         
@@ -479,7 +485,7 @@ if st.session_state.analysis_results:
             with col_dl:
                 md_report = generate_markdown_report(cand_name, data)
                 st.download_button(
-                    label=ui["download_btn"],
+                    label=get_ui("download_btn"),
                     data=md_report,
                     file_name=f"TalentScout_Report_{cand_name}.md",
                     mime="text/markdown",
