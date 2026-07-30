@@ -74,8 +74,8 @@ UI_ZH = {
     "sec1_title": "📊 1. 漏斗決策與 ATS 匹配度",
     "m_score": "綜合勝任力得分",
     "m_ats": "ATS 關鍵字匹配率",
-    "m_rec": "漏斗轉換建議",
-    "m_time": "到職時效評估",
+    "m_rec": "💡 高階主管決策建議 (Executive Summary)",
+    "m_time": "⏳ 到職時效與離職風險評估",
     "ats_matched": "✅ 命中關鍵字:",
     "ats_missing": "❌ 缺失關鍵字:",
     "sec2_title": "📈 2. 核心勝任力維度拆解 (冰山模型)",
@@ -139,8 +139,8 @@ UI_EN = {
     "sec1_title": "📊 1. Funnel Verdict & ATS Match",
     "m_score": "Competency Score",
     "m_ats": "ATS Keyword Match",
-    "m_rec": "Funnel Recommendation",
-    "m_time": "Time-to-Fill Assessment",
+    "m_rec": "💡 Executive Summary & Recommendation",
+    "m_time": "⏳ Time-to-Fill & Risk Assessment",
     "ats_matched": "✅ Matched Keywords:",
     "ats_missing": "❌ Missing Keywords:",
     "sec2_title": "📈 2. Core Competency Breakdown (Iceberg Model)",
@@ -258,31 +258,29 @@ def robust_json_parse(raw_text):
     except Exception as e:
         raise ValueError("JSON Parsing Failed") from e
 
-# 💡 終極融入 5 大中西 HR 招聘理論與架構的 Prompt
+# 💡 終極深度分析 Prompt (強效約束長度與全文本掃描)
 def build_evaluation_prompt(lang, is_ref, urgency, special, jd, cv, feedback=""):
     lang_instruction = "Provide the ENTIRE analysis strictly in Professional Traditional Chinese (繁體中文), using senior executive HR advisory terminology (Korn Ferry / Spencer Stuart style)." if lang else "Provide the ENTIRE analysis strictly in Professional Executive English, using McKinsey/Korn Ferry level advisory tone."
     referral_instruction = "This candidate is an INTERNAL REFERRAL. Apply referral weighting." if is_ref else ""
     feedback_prompt = f"\n\n### HR Human-in-the-Loop Feedback for this candidate:\n{feedback}\n(Integrate this human insight into your strategic assessment.)" if feedback.strip() else ""
     
     return f"""
-You are an Elite Executive Search Consultant and Board-Level HR Advisor applying rigorous Global HR Science and Talent Acquisition Principles (Korn Ferry Competency Model, Hay Group Iceberg Model, McKinsey MECE Principle, and STAR/BARS Interview Frameworks).
+You are an Elite Executive Search Consultant and Board-Level HR Advisor applying rigorous Global HR Science Frameworks (Korn Ferry Competency Model, Hay Group Iceberg Model, McKinsey MECE Principle, and BARS Interview Methodology).
 
 CORE HR SCIENCE AUDIT RULES:
-1. TENURE CALCULATION & MATHEMATICAL RIGOR (MECE Principle):
-   - You MUST accurately sum up the candidate's total years of experience across ALL positions in the CV.
-   - Do NOT miscalculate employment years. Verify dates carefully before flagging "lack of experience".
+1. FULL-TEXT SCAN (DO NOT MISS EDUCATION/CERTS):
+   - You MUST scan the ENTIRE CV including Education, Certifications, and Training (e.g. Hong Kong Institute of Construction, Quantity Surveying, BIM, Insurance, or Trade licenses).
+   - If a candidate has construction/engineering schooling or certificates, DO NOT state they "lack construction industry background". Acknowledge their academic/certified fit!
 
-2. ICEBERG MODEL & FULL-TEXT DEEP SCAN (Knowledge, Skills vs. Attributes):
-   - Perform a full-text scan of the entire CV, including "Professional Qualifications", "Certifications", "Licenses" (e.g. Construction Worker Registration Card, Insurance Intermediaries, Safety Cards), and "Other Skills".
-   - Match hard skills directly required in the JD (e.g. Industry experience, licenses, languages, travel readiness) against the FULL CV text, not just Job Titles.
+2. ACCURATE TENURE CALCULATION (MECE Principle):
+   - Accurately calculate total years of experience across ALL employment history entries. Do NOT undercount tenure.
 
-3. NUANCED RISK ASSESSMENT (Job-Fit vs. Org-Fit):
-   - Differentiate between a Junior candidate who needs training vs. a Senior/Managerial candidate who is OVERQUALIFIED or taking a salary adjustment (e.g., due to company closure/emigration).
-   - Do NOT penalize non-executive or administrative roles for lacking C-suite metrics (like P&L ownership or revenue targets) unless explicitly demanded in the JD.
+3. HIGH-DENSITY EXECUTIVE SUMMARY:
+   - "funnel_recommendation" MUST be a comprehensive 3-4 sentence Board-level Executive Summary detailing: 1) Strategic Fit, 2) Unique Value Proposition, and 3) Recommended Interview Focus.
+   - "time_to_fill_assessment" MUST analyze availability, notice period, and potential flight/salary adjustment risks.
 
-4. STAR & BARS INTERVIEW RUBRICS (Behaviorally Anchored Rating Scales):
-   - Structure interview questions using the STAR framework.
-   - Rubrics (1-3-5 points) MUST provide specific, behavioral response indicators anchored to real scenario evidence from the CV or core JD challenges, avoiding generic fluff like "gives good examples".
+4. STAR & BARS INTERVIEW RUBRICS:
+   - Provide concrete, behaviorally-anchored 1-3-5 rating scales tailored to specific achievements in the CV.
 
 Language Requirement:
 {lang_instruction}
@@ -298,29 +296,29 @@ Format your output STRICTLY in valid JSON matching this schema:
   "funnel_and_ats": {{
     "competency_overall_score": 85,
     "ats_match_percentage": 75,
-    "matched_keywords": ["Explicit hard skills, licenses, and domains matched directly from JD or full CV text"],
+    "matched_keywords": ["Explicit hard skills, licenses, and academic background matched directly from JD or CV"],
     "missing_keywords": ["Genuine gap keywords explicitly requested in JD"],
-    "funnel_recommendation": "Executive Recruiter Verdict: Concise 2-sentence summary outlining key value proposition and primary interview probe focus.",
-    "time_to_fill_assessment": "Notice period and availability assessment based on CV data."
+    "funnel_recommendation": "Board-Level Executive Summary (3-4 sentences): Detailed strategic alignment, key strengths, and specific areas for C-suite interview probing.",
+    "time_to_fill_assessment": "Comprehensive availability analysis, notice period, and salary expectation/retention risk assessment."
   }},
   "competency_breakdown": [
     {{
       "dimension": "Surface Competencies (Hard Skills, Domain & Qualifications)",
       "score": "85/100",
-      "justification": "Analytical justification citing exact total years of experience, specific licenses, certifications, and technical proficiencies from CV.",
+      "justification": "Detailed analysis referencing total years of experience, specific licenses, schooling (e.g., HKIC/Universities), and technical proficiencies.",
       "evidence": "Direct quote or metric from CV"
     }},
     {{
       "dimension": "Core Leadership, Governance & Execution (Under the Iceberg)",
       "score": "90/100",
-      "justification": "Evaluation of managing up, stakeholder liaison, team management, or complex problem-solving capabilities.",
+      "justification": "In-depth evaluation of stakeholder liaison, crisis management, cross-border coordination, and executive support capabilities.",
       "evidence": "Direct quote or metric from CV"
     }}
   ],
   "dei_and_risks": {{
     "dei_safeguard_applied": "Specific HR compliance audit note on how pedigree bias or ageism was actively mitigated.",
     "hard_risks": ["Real, job-critical compliance blockers directly requested in JD"],
-    "soft_risks": ["Nuanced HR observations (e.g., overqualification, flight risk, salary adjustment, or team transition)"]
+    "soft_risks": ["Nuanced HR observations (e.g., overqualification, flight risk, salary adjustment, or onboarding focus)"]
   }},
   "structured_interview_rubric": [
     {{
@@ -478,13 +476,14 @@ if st.session_state.analysis_results:
             funnel = data.get('funnel_and_ats', {})
             dei = data.get('dei_and_risks', {})
             
-            # Sec 1: Funnel
+            # Sec 1: Funnel (💡 改用全寬度 Box 呈現高階決策建議，消滅截斷問題)
             st.markdown(f"### {get_ui('sec1_title')}")
-            c1, c2, c3, c4 = st.columns(4)
+            c1, c2 = st.columns(2)
             c1.metric(get_ui("m_score"), f"{funnel.get('competency_overall_score', 'N/A')} / 100")
             c2.metric(get_ui("m_ats"), f"{funnel.get('ats_match_percentage', 'N/A')} %")
-            c3.metric(get_ui("m_rec"), funnel.get('funnel_recommendation', 'N/A'))
-            c4.metric(get_ui("m_time"), funnel.get('time_to_fill_assessment', 'N/A'))
+            
+            st.info(f"**{get_ui('m_rec')}**\n\n{funnel.get('funnel_recommendation', 'N/A')}")
+            st.warning(f"**{get_ui('m_time')}**\n\n{funnel.get('time_to_fill_assessment', 'N/A')}")
             
             st.success(f"**{get_ui('ats_matched')}** " + ", ".join(funnel.get('matched_keywords', [])))
             st.error(f"**{get_ui('ats_missing')}** " + ", ".join(funnel.get('missing_keywords', [])))
@@ -494,9 +493,9 @@ if st.session_state.analysis_results:
             st.markdown(f"### {get_ui('sec2_title')}")
             comp_data = data.get('competency_breakdown', [])
             if comp_data:
-                sb_cols = st.columns(min(len(comp_data), 3))
+                sb_cols = st.columns(min(len(comp_data), 2))
                 for idx, item in enumerate(comp_data):
-                    with sb_cols[idx % 3]:
+                    with sb_cols[idx % 2]:
                         st.markdown(f"**{item.get('dimension', 'N/A')}**")
                         st.markdown(f"#### {item.get('score', 'N/A')}")
                         st.caption(f"{item.get('justification', '')}")
