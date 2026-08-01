@@ -6,7 +6,7 @@
 [![CodeQL Advanced](https://github.com/jackylawck/TalentScout/actions/workflows/codeql.yml/badge.svg)](https://github.com/jackylawck/TalentScout/actions/workflows/codeql.yml)
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://talentscout-open.streamlit.app)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
+![License](https://img.shields.io/badge/License-Apache_License_2.0-green)
 ![HR Tech](https://img.shields.io/badge/HR_Tech-ATS_%7C_DEI_%7C_ISO_42001-orange)
 
 ---
